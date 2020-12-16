@@ -1,10 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:ffi';
-import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -19,7 +16,6 @@ import 'package:seongdonggu/common/util.dart';
 import 'package:seongdonggu/data/dto/categoryData.dart';
 import 'package:seongdonggu/data/dto/naviData.dart';
 import 'package:seongdonggu/data/dto/placeData.dart';
-import 'package:seongdonggu/inAppReviewWidget.dart';
 import 'package:seongdonggu/network/worker.dart';
 import 'package:seongdonggu/noticeView.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -57,7 +53,6 @@ class MainViewState extends State<MainViewWidget> {
   String _currentTtsDescription = "";
   bool _isUsingTTS = false;
 
-  // Completer<GoogleMapController> _controller = Completer();
   GoogleMapController _controller;
   CameraPosition CAMERA_POSITION_CENTER = CameraPosition(
     target: LatLng(37.54853, 126.822988),
@@ -262,7 +257,6 @@ class MainViewState extends State<MainViewWidget> {
   }
 
   menuSelected(int value) {
-    print("menuSelected $value");
     switch (value) {
       case 0:
         Navigator.of(context).push(
@@ -523,21 +517,6 @@ class MainViewState extends State<MainViewWidget> {
                       launch(('tel://${_currentPlaceData.contact}'));
                     },
                   ),
-                  // FlatButton(
-                  //   child: Column(children: [
-                  //     Image.asset("asset/images/comment.png",
-                  //         width: 30, height: 30),
-                  //     Text(StringClass.NOTICE),
-                  //   ]),
-                  //   onPressed: () {
-                  //     print("current location $_current_position");
-                  //     Navigator.of(context).push(
-                  //       MaterialPageRoute(
-                  //         builder: (BuildContext context) => NoticeViewWidget(),
-                  //       ),
-                  //     );
-                  //   },
-                  // ),
                   FlatButton(
                     child: Column(children: [
                       Image.asset("asset/images/cancel.png",
@@ -577,7 +556,6 @@ class MainViewState extends State<MainViewWidget> {
           _current_position = position;
         }
 
-        print("update current position $_current_position");
         requestDirection3(
                 _current_position.latitude,
                 _current_position.longitude,
@@ -585,7 +563,6 @@ class MainViewState extends State<MainViewWidget> {
                 _currentPlaceData.longitude)
             .then((value) {
           _polyLineList = value;
-          print("getOverlay polyLineList $_polyLineList");
           setState(() {
             CAMERA_POSITION_CENTER = CameraPosition(
                 target: LatLng(
@@ -647,38 +624,8 @@ class MainViewState extends State<MainViewWidget> {
   FlutterTts flutterTts = FlutterTts();
 
   void checkDistance() async {
-    // retry check
-    if (_polyLineList != null && _polyLineList.length > 0) {
-      for (int i = 0; i < _polyLineList.length; i++) {
-        Polyline po = _polyLineList[i];
-        List<LatLng> coords = po.points;
-        for (int j = 0; j < coords.length; j++) {
-          LatLng ll = coords[j];
-          // double distance = await geolocator.distanceBetween(
-          //     _current_position.latitude,
-          //     _current_position.longitude,
-          //     ll.latitude,
-          //     ll.longitude);
-          // print("checkDistance ${_current_position.latitude} ${_current_position.longitude} distance $distance");
-          // if (distance > 50) {
-          //   isOver = true;
-          //   await flutterTts.awaitSpeakCompletion(true);
-          //   await flutterTts.speak("경로를 재탐색합니다.");
-          //   ttsHash.clear();
-          //   NAVI_LIST.clear();
-          //   getOverlay();
-          //   return;
-          //   break;
-          // }
-        }
-        // if (isOver) {
-        //   break;
-        // }
-      }
-    }
-
     // tts check
-    if (/*!isOver && */ NAVI_LIST != null) {
+    if ( NAVI_LIST != null) {
       List<NaviData> naviListForTTS = new List();
       for (int i = 0; i < NAVI_LIST.length; i++) {
         NaviData nv = NAVI_LIST[i];
@@ -702,11 +649,12 @@ class MainViewState extends State<MainViewWidget> {
         }
       }
       // tts play
-      print("naviListForTTS ${naviListForTTS.length}");
+      print("naviListForTTS ${naviListForTTS.length} ttsHash $ttsHash}");
       if (_isUsingTTS) {
         if (ttsHash.length == 0) {
           ttsHash[StringClass.TTS_STARTED] = StringClass.TTS_STARTED;
           await flutterTts.speak(StringClass.TTS_STARTED);
+          return;
         } else {
           await flutterTts.speak("");
         }
@@ -715,7 +663,6 @@ class MainViewState extends State<MainViewWidget> {
         flutterTts.setCompletionHandler(() async {
           for (int i = 0; i < naviListForTTS.length; i++) {
             NaviData nv = naviListForTTS[i];
-            print("nv ${nv} contain ${ttsHash.containsKey(nv.description)}");
             if (ttsHash.containsKey(nv.description)) {
               continue;
             }
@@ -738,34 +685,6 @@ class MainViewState extends State<MainViewWidget> {
         });
       }
       setState(() {});
-    }
-    //   for (int i = 0; i < naviListForTTS.length; i++) {
-    //     NaviData nv = naviListForTTS[i];
-    //     print("nv ${nv} contain ${ttsHash.containsKey(nv.description)}");
-    //     if (ttsHash.containsKey(nv.description)) {
-    //       continue;
-    //     }
-    //     ttsHash[nv.description] = nv.description;
-    //     _currentTtsDescription = nv.description;
-    //     if (nv.description == StringClass.ARRIVE) {
-    //       naviListForTTS.clear();
-    //       stopNavi();
-    //       showToast(StringClass.TTS_ARRIVED);
-    //       playTts(StringClass.TTS_ARRIVED);
-    //     } else {
-    //       playTts(nv.description);
-    //     }
-    //   }
-    //   setState(() {
-    //
-    //   });
-    // }
-  }
-
-  Future<void> playTts(String string) async {
-    print("playTts $string _isUsingTTS $_isUsingTTS");
-    if (_isUsingTTS) {
-      await flutterTts.speak(string);
     }
   }
 
