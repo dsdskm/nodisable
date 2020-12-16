@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +23,8 @@ void main() async {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);
     test();
   }
+  stderr.writeln('App start');
+  developer.log('log me', name: 'App start');
 
 
 }

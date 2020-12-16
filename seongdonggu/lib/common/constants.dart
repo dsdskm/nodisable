@@ -1,4 +1,4 @@
-final DEBUG = true;
+final DEBUG = false;
 
 final NAVER_CLIENT_ID = "quld7x8r88";
 
