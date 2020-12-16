@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "518286416974",
+    "firebase_url": "https://nodisable.firebaseio.com",
+    "project_id": "nodisable",
+    "storage_bucket": "nodisable.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:518286416974:android:883502001170aaeea2371f",
+        "android_client_info": {
+          "package_name": "com.kkh.seongdonggu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwKQdySyoSuQMTaparE0EBdOb22dyml60"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
