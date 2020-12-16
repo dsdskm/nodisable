@@ -1,8 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:seongdonggu/common/cahced.dart';
-import 'package:seongdonggu/common/constants.dart';
 import 'package:seongdonggu/common/stringConstant.dart';
 import 'package:seongdonggu/common/util.dart';
 import 'package:seongdonggu/data/dto/noticeData.dart';
@@ -46,7 +44,6 @@ class NoticeDetailViewState extends State<NoticeDetailViewWidget> {
                 NoticeData data = snapshot.data;
                 String title = data.title;
                 String content = data.content;
-                String image = data.image;
                 return Container(
                     padding: EdgeInsets.all(20),
                     alignment: Alignment.topLeft,

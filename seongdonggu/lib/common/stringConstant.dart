@@ -22,5 +22,6 @@ class StringClass{
   static String ARRIVE = "도착";
   static String RESTARTED = "재안내";
   static String CURRENT_LOCATION = "현재위치";
+  static String NETWORK_ERR_MSG = "네트워크 상태를 확인 후 재실행 해주세요.";
 
 }

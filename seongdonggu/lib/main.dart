@@ -1,15 +1,15 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:seongdonggu/commentView.dart';
 import 'package:seongdonggu/common/constants.dart';
 import 'package:seongdonggu/common/stringConstant.dart';
 import 'package:seongdonggu/common/cahced.dart';
 import 'package:seongdonggu/common/test.dart';
-import 'package:seongdonggu/common/util.dart';
 import 'package:seongdonggu/data/database.dart';
 import 'package:seongdonggu/data/dto/categoryData.dart';
 import 'package:seongdonggu/data/dto/placeData.dart';
@@ -19,7 +19,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   DATABASE = await $FloorMyDatabase.databaseBuilder('my_database.db').build();
   runApp(MyApp());
-  test();
+  if(DEBUG){
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);
+    test();
+  }
+  stderr.writeln('App start');
+  developer.log('log me', name: 'App start');
+
+
 }
 
 class MyApp extends StatelessWidget {
@@ -28,15 +35,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     //checkNetworkConnection(context);
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: StringClass.LABEL,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       routes: <String, WidgetBuilder>{
         MainView.route: (BuildContext context) => new MainViewWidget(),
-        // MapView.route: (BuildContext context) => new MapViewWidget(),
-        CommentView.route: (BuildContext context) => new CommentViewWidget(),
       },
       home: MyHomePage(),
     );
@@ -52,24 +57,11 @@ void checkNetworkConnection(BuildContext context) async {
   } else {
     print("Network type is unknown");
     Fluttertoast.showToast(
-        msg: "네트워크 상태를 확인 후 재실행 해주세요.",
+        msg: StringClass.NETWORK_ERR_MSG,
         backgroundColor: Colors.lightBlue,
         gravity: ToastGravity.CENTER);
     SystemChannels.platform.invokeMethod('SystemNavigator.pop');
-    // showDialog(
-    //     context: context,
-    //     builder: (context) => AlertDialog(
-    //           title: new Text("네트워크 오류"),
-    //           content: new Text("네트워크 상태를 확인하세요"),
-    //           actions: <Widget>[
-    //             new FlatButton(
-    //               child: new Text("확인"),
-    //               onPressed: () {
-    //                 SystemChannels.platform.invokeMethod('SystemNavigator.pop');
-    //               },
-    //             ),
-    //           ],
-    //         ));
+
   }
 }
 
@@ -125,8 +117,6 @@ class _MyHomePageState extends State<MyHomePage> {
       List<CategoryData> list = new List();
       List<CategoryData> depth1_list = new List();
       DATABASE.categoryDao.deleteAll();
-      // length =1;
-
       for (int i = 0; i < event.documents.length; i++) {
         DocumentSnapshot ds = event.documents[i];
         List<dynamic> menu = ds[FIELD_MENU_CATEGORY];
@@ -136,10 +126,8 @@ class _MyHomePageState extends State<MyHomePage> {
           list.add(cd);
           depth1_list.add(cd);
         }
-        print("syncCategory list $list");
         for (int j = 0; j < depth1_list.length; j++) {
           CategoryData sub_cd = depth1_list[j];
-          print("sub_cd $sub_cd");
           List<dynamic> subMenu = ds[sub_cd.value];
           for (int k = 0; k < subMenu.length; k++) {
             String sub_category = subMenu[k];
@@ -148,8 +136,6 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         }
       }
-      print("syncCategory ${list.length}");
-      print("syncCategory $list");
       DATABASE.categoryDao.insertAll(list);
       CATEGORY_LIST = list;
       // Navigator.popAndPushNamed(context, MapView.route);
@@ -159,7 +145,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   syncData() {
     print("syncData");
-
     Firestore.instance
         .collection(COLLECTION_LOCATION)
         .snapshots()
@@ -214,7 +199,6 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       }
       DATABASE.placeDao.insertAll(list);
-      print("sync list size ${list.length}");
       syncCategory();
     });
   }
