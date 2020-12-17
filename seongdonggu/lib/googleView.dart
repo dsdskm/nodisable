@@ -20,6 +20,8 @@ import 'package:seongdonggu/network/worker.dart';
 import 'package:seongdonggu/noticeView.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'commentView.dart';
+
 class MainView extends StatelessWidget {
   static String route = "/mainView";
 
@@ -55,7 +57,7 @@ class MainViewState extends State<MainViewWidget> {
 
   GoogleMapController _controller;
   CameraPosition CAMERA_POSITION_CENTER = CameraPosition(
-    target: LatLng(37.54853, 126.822988),
+    target: LatLng(37.570660, 127.034145),
     zoom: _zoom,
   );
 
@@ -266,7 +268,11 @@ class MainViewState extends State<MainViewWidget> {
         );
         break;
       case 1:
-        goInAppReview();
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (BuildContext context) => CommentViewWidget(),
+          ),
+        );
         break;
       case 2:
         SystemChannels.platform.invokeMethod('SystemNavigator.pop');
@@ -625,7 +631,7 @@ class MainViewState extends State<MainViewWidget> {
 
   void checkDistance() async {
     // tts check
-    if ( NAVI_LIST != null) {
+    if (NAVI_LIST != null) {
       List<NaviData> naviListForTTS = new List();
       for (int i = 0; i < NAVI_LIST.length; i++) {
         NaviData nv = NAVI_LIST[i];
@@ -700,13 +706,7 @@ class MainViewState extends State<MainViewWidget> {
   final InAppReview inAppReview = InAppReview.instance;
 
   Future<void> goInAppReview() async {
-    if (await inAppReview.isAvailable()) {
-      print("goInAppReview isAvailable");
-      inAppReview.requestReview();
-    } else {
-      print("goInAppReview isNotAvailable");
-      //inAppReview.openStoreListing(appStoreId: '<YOUR_APP_STORE_ID>')
-    }
+    inAppReview.openStoreListing();
   }
 
   void showTtsSelectDialog() {

@@ -10,6 +10,7 @@ import 'package:seongdonggu/common/constants.dart';
 import 'package:seongdonggu/common/stringConstant.dart';
 import 'package:seongdonggu/common/cahced.dart';
 import 'package:seongdonggu/common/test.dart';
+import 'package:seongdonggu/common/util.dart';
 import 'package:seongdonggu/data/database.dart';
 import 'package:seongdonggu/data/dto/categoryData.dart';
 import 'package:seongdonggu/data/dto/placeData.dart';
@@ -22,6 +23,8 @@ void main() async {
   if(DEBUG){
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);
     test();
+  } else {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
   stderr.writeln('App start');
   developer.log('log me', name: 'App start');
@@ -153,26 +156,26 @@ class _MyHomePageState extends State<MyHomePage> {
       DATABASE.placeDao.deleteAll();
       for (int i = 0; i < event.documents.length; i++) {
         DocumentSnapshot ds = event.documents[i];
-        String address = ds[FIELD_ADDRESS];
-        String category1 = ds[FIELD_CATEGORY1];
-        String category2 = ds[FIELD_CATEGORY2];
-        String contact = ds[FIELD_CONTACT];
+        String address = nullCheck(ds[FIELD_ADDRESS]);
+        String category1 = nullCheck(ds[FIELD_CATEGORY1]);
+        String category2 = nullCheck(ds[FIELD_CATEGORY2]);
+        String contact = nullCheck(ds[FIELD_CONTACT]);
         bool elevator = ds[FIELD_ELEVATOR];
-        String floor = ds[FIELD_FLOOR];
+        String floor = nullCheck(ds[FIELD_FLOOR]);
         bool gyungsaro = ds[FIELD_GYUNGSARO];
         double latitude = ds[FIELD_LATITUDE];
         double longitude = ds[FIELD_LONGITUDE];
-        String name = ds[FIELD_NAME];
+        String name = nullCheck(ds[FIELD_NAME]);
         bool parking = ds[FIELD_PARKING];
         bool restroom = ds[FIELD_RESTROOM];
-        String summary = ds[FIELD_SUMMARY];
+        String summary = nullCheck(ds[FIELD_SUMMARY]);
         bool using = ds[FIELD_USING];
         Map<dynamic, dynamic> image = ds[FIELD_IMAGE];
-        String image_base = image[FIELD_IMAGE_BASE];
-        String image_elevator = image[FIELD_IMAGE_ELEVATOR];
-        String image_gyungsaro = image[FIELD_IMAGE_GYUNGSARO];
-        String image_parking = image[FIELD_IMAGE_PARKING];
-        String image_restroom = image[FIELD_IMAGE_RESTROOM];
+        String image_base = nullCheck(image[FIELD_IMAGE_BASE]);
+        String image_elevator = nullImageCheck(image[FIELD_IMAGE_ELEVATOR],image_base);
+        String image_gyungsaro = nullImageCheck(image[FIELD_IMAGE_GYUNGSARO],image_base);
+        String image_parking = nullImageCheck(image[FIELD_IMAGE_PARKING],image_base);
+        String image_restroom = nullImageCheck(image[FIELD_IMAGE_RESTROOM],image_base);
         PlaceData pd = PlaceData(
             ds.documentID,
             address,

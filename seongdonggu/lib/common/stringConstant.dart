@@ -1,5 +1,5 @@
 class StringClass{
-  static String LABEL = "무장애 성동구";
+  static String LABEL = "무장애 IN 성동구";
   static String TAB_LABEL_GYUNGSARO = "경사로";
   static String TAB_LABEL_RESTROOM = "화장실";
   static String TAB_LABEL_ELEVATOR = "엘리베이터";
@@ -9,10 +9,15 @@ class StringClass{
   static String CANCEL="취소";
   static String REVIEW="리뷰";
   static String NOTICE="공지사항";
+  static String COMMENT="의견 공유";
+  static String SEND="보내기";
+  static String CONTACT_EMAIL="개발자 이메일\ntothetg@naver.com";
   static String ALL="전체";
   static String EXIT="종료";
   static String DIALOG_TITLE_TTS = "음성 안내";
   static String DIALOG_MESSAGE_TTS = "음성을 사용하시겠습니까?";
+  static String DIALOG_TITLE_COMMENT = "의견 전달";
+  static String DIALOG_MESSAGE_COMMENT = "의견을 전달하시겠습니까?";
   static String YES = "예";
   static String NO = "아니오";
   static String TTS_ARRIVED = "목적지 근처에 도착하였습니다.";
@@ -23,5 +28,7 @@ class StringClass{
   static String RESTARTED = "재안내";
   static String CURRENT_LOCATION = "현재위치";
   static String NETWORK_ERR_MSG = "네트워크 상태를 확인 후 재실행 해주세요.";
+  static String COMMENT_HINT = "의견을 입력해주세요.";
+  static String NA = "NA";
 
 }
