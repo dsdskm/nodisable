@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -31,6 +32,8 @@ void main() async {
   stderr.writeln('App start');
   developer.log('log me', name: 'App start');
 }
+
+
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -176,13 +179,13 @@ class _MyHomePageState extends State<MyHomePage> {
         Map<dynamic, dynamic> image = ds[FIELD_IMAGE];
         String image_base = nullCheck(image[FIELD_IMAGE_BASE]);
         String image_elevator =
-            nullImageCheck(image[FIELD_IMAGE_ELEVATOR], image_base);
+        nullImageCheck(image[FIELD_IMAGE_ELEVATOR], image_base);
         String image_gyungsaro =
-            nullImageCheck(image[FIELD_IMAGE_GYUNGSARO], image_base);
+        nullImageCheck(image[FIELD_IMAGE_GYUNGSARO], image_base);
         String image_parking =
-            nullImageCheck(image[FIELD_IMAGE_PARKING], image_base);
+        nullImageCheck(image[FIELD_IMAGE_PARKING], image_base);
         String image_restroom =
-            nullImageCheck(image[FIELD_IMAGE_RESTROOM], image_base);
+        nullImageCheck(image[FIELD_IMAGE_RESTROOM], image_base);
         PlaceData pd = PlaceData(
             ds.documentID,
             address,

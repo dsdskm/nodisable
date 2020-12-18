@@ -11,6 +11,8 @@ class StringClass{
   static String NOTICE="공지사항";
   static String COMMENT="의견 공유";
   static String SEND="보내기";
+  static String GO_MARKET="플레이 스토어 리뷰";
+  static String GO_APPSTORE="앱 스토어 리뷰";
   static String CONTACT_EMAIL="개발자 이메일\ntothetg@naver.com";
   static String ALL="전체";
   static String EXIT="종료";
@@ -18,6 +20,7 @@ class StringClass{
   static String DIALOG_MESSAGE_TTS = "음성을 사용하시겠습니까?";
   static String DIALOG_TITLE_COMMENT = "의견 전달";
   static String DIALOG_MESSAGE_COMMENT = "의견을 전달하시겠습니까?";
+  static String GO_UPDATE = "업데이트";
   static String YES = "예";
   static String NO = "아니오";
   static String TTS_ARRIVED = "목적지 근처에 도착하였습니다.";
@@ -31,5 +34,7 @@ class StringClass{
   static String NAVI_ERR_MSG = "경로 안내 범위에 해당하지 않습니다.";
   static String COMMENT_HINT = "의견을 입력해주세요.";
   static String NA = "NA";
+  static String UPDATE_TITLE = "앱 업데이트";
+  static String UPDATE_MESSAGE = "앱 업데이트 이후 사용가능합니다.";
 
 }

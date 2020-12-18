@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:launch_review/launch_review.dart';
 import 'package:seongdonggu/common/cahced.dart';
 import 'package:seongdonggu/common/constants.dart';
 import 'package:seongdonggu/common/stringConstant.dart';
@@ -58,6 +61,22 @@ class CommentViewState extends State<CommentViewWidget> {
                   child: Text(StringClass.SEND),
                   onPressed: () {
                     showConfirmDialog();
+                  },
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.all(5.0),
+                padding: const EdgeInsets.all(5.0),
+                decoration: BoxDecoration(
+                    border: Border.all(color: Colors.deepOrangeAccent)),
+                child: FlatButton(
+                  child: Text(Platform.isAndroid
+                      ? StringClass.GO_MARKET
+                      : StringClass.GO_APPSTORE),
+                  onPressed: () {
+                    LaunchReview.launch(
+                        androidAppId: "com.kkh.seongdonggu",
+                        iOSAppId: "com.kkh.seongdonggu");
                   },
                 ),
               )

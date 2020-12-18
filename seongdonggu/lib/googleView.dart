@@ -188,6 +188,7 @@ class MainViewState extends State<MainViewWidget> {
 
   @override
   Widget build(BuildContext context) {
+    appVersionCheck(context);
     initDropDownList();
     print("build isShowingMap $_isShowingMap");
     return Scaffold(
