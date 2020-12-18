@@ -27,6 +27,7 @@ class StringClass{
   static String TTS_STARTED = "보행자 경로를 안내합니다.";
   static String TTS_CANCELED = "보행자 경로 안내를 취소합니다.";
   static String TTS_RESTARTED = "보행자 경로를 다시 안내합니다.";
+  static String TTS_VOID = "다음 안내까지 직진해주세요.";
   static String ARRIVE = "도착";
   static String RESTARTED = "재안내";
   static String CURRENT_LOCATION = "현재위치";

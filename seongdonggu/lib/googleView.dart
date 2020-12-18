@@ -10,6 +10,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:in_app_review/in_app_review.dart';
+import 'package:progress_dialog/progress_dialog.dart';
 import 'package:seongdonggu/common/cahced.dart';
 import 'package:seongdonggu/common/constants.dart';
 import 'package:seongdonggu/common/stringConstant.dart';
@@ -384,7 +385,7 @@ class MainViewState extends State<MainViewWidget> {
                             style: TextStyle(fontSize: 20),
                           ),
                           onPressed: () {
-                            getOverlay();
+                            getOverlay(true);
                             if (_isUsingTTS) {
                               flutterTts.speak(StringClass.TTS_RESTARTED);
                             }
@@ -551,8 +552,16 @@ class MainViewState extends State<MainViewWidget> {
     });
   }
 
-  void getOverlay() async {
+  void getOverlay(bool start) async {
     print("getOverlay");
+    if (start) {
+      ProgressDialog pr = new ProgressDialog(context,
+          type: ProgressDialogType.Normal,
+          isDismissible: false,
+          showLogs: true);
+      pr.show();
+    }
+
     _polyLineList.clear();
     _geolocator
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
@@ -658,37 +667,42 @@ class MainViewState extends State<MainViewWidget> {
       }
       // tts play
       print("naviListForTTS ${naviListForTTS.length} ttsHash $ttsHash}");
-      if (_isUsingTTS) {
+      if (_isUsingTTS && _isNaviStarted) {
+        String text = "";
         if (ttsHash.length == 0) {
           ttsHash[StringClass.TTS_STARTED] = StringClass.TTS_STARTED;
-          await flutterTts.speak(StringClass.TTS_STARTED);
-        } else{
-          await flutterTts.speak(" ");
+          text = StringClass.TTS_STARTED;
+        } else {
+          text = StringClass.TTS_VOID;
         }
-        await flutterTts.awaitSpeakCompletion(true);
-        flutterTts.setCompletionHandler(() async {
-          for (int i = 0; i < naviListForTTS.length; i++) {
-            NaviData nv = naviListForTTS[i];
-            if (ttsHash.containsKey(nv.description)) {
-              continue;
-            }
-            _currentTtsDescription = nv.description;
-            String tts = nv.description;
-            if (nv.description == StringClass.ARRIVE) {
-              naviListForTTS.clear();
-              stopNavi();
-              tts = StringClass.TTS_ARRIVED;
-              showToast(StringClass.TTS_ARRIVED);
-            }
-            if (_isUsingTTS && _isNaviStarted) {
-              print("tts $tts");
-              await flutterTts.speak(tts);
-              flutterTts.setCompletionHandler(() {
-                ttsHash[nv.description] = nv.description;
-              });
-            }
-          }
-        });
+        print("tts text $text");
+        flutterTts.speak(text).then((value) => {
+              flutterTts.setCompletionHandler(() async {
+                for (int i = 0; i < naviListForTTS.length; i++) {
+                  NaviData nv = naviListForTTS[i];
+                  if (ttsHash.containsKey(nv.description)) {
+                    continue;
+                  }
+                  _currentTtsDescription = nv.description;
+                  String tts = nv.description;
+                  if (nv.description == StringClass.ARRIVE) {
+                    naviListForTTS.clear();
+                    stopNavi();
+                    tts = StringClass.TTS_ARRIVED;
+                    showToast(StringClass.TTS_ARRIVED);
+                  }
+                  if (_isUsingTTS && _isNaviStarted) {
+                    print("tts text $tts");
+                    await flutterTts.speak(tts);
+                    flutterTts.setCompletionHandler(() {
+                      ttsHash[nv.description] = nv.description;
+                    });
+                  }
+                }
+              })
+            });
+        // flutterTts.awaitSpeakCompletion(true);
+
       }
       setState(() {});
     }
@@ -733,7 +747,7 @@ class MainViewState extends State<MainViewWidget> {
                       onPressed: () {
                         _isUsingTTS = true;
                         _isNaviStarted = true;
-                        getOverlay();
+                        getOverlay(true);
                         Navigator.of(context, rootNavigator: true)
                             .pop('dialog');
                       },
@@ -742,7 +756,7 @@ class MainViewState extends State<MainViewWidget> {
                       child: new Text(StringClass.NO),
                       onPressed: () {
                         _isUsingTTS = false;
-                        getOverlay();
+                        getOverlay(true);
                         Navigator.of(context, rootNavigator: true)
                             .pop('dialog');
                       },
