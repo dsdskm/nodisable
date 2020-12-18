@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:in_app_review/in_app_review.dart';
@@ -64,6 +65,7 @@ class MainViewState extends State<MainViewWidget> {
   @override
   void initState() {
     super.initState();
+    getCurrentLocation();
     _timer = Timer.periodic(Duration(seconds: CURRENT_LOCATION_CHECK_DELAY),
         (timer) {
       getCurrentLocation();
@@ -508,7 +510,6 @@ class MainViewState extends State<MainViewWidget> {
                     ]),
                     onPressed: () {
                       print("current location $_current_position");
-                      _isNaviStarted = true;
                       showTtsSelectDialog();
                     },
                   ),
@@ -649,7 +650,7 @@ class MainViewState extends State<MainViewWidget> {
               latlng.latitude,
               latlng.longitude);
           print("checkDistance distance for nav $distance");
-          if (distance < 20) {
+          if (distance < NAVI_LIST_DISTANCE) {
             naviListForTTS.add(nv);
           }
         }
@@ -660,11 +661,9 @@ class MainViewState extends State<MainViewWidget> {
         if (ttsHash.length == 0) {
           ttsHash[StringClass.TTS_STARTED] = StringClass.TTS_STARTED;
           await flutterTts.speak(StringClass.TTS_STARTED);
-          return;
-        } else {
-          await flutterTts.speak("");
+        } else{
+          await flutterTts.speak(" ");
         }
-
         await flutterTts.awaitSpeakCompletion(true);
         flutterTts.setCompletionHandler(() async {
           for (int i = 0; i < naviListForTTS.length; i++) {
@@ -680,7 +679,7 @@ class MainViewState extends State<MainViewWidget> {
               tts = StringClass.TTS_ARRIVED;
               showToast(StringClass.TTS_ARRIVED);
             }
-            if (_isUsingTTS) {
+            if (_isUsingTTS && _isNaviStarted) {
               print("tts $tts");
               await flutterTts.speak(tts);
               flutterTts.setCompletionHandler(() {
@@ -710,29 +709,51 @@ class MainViewState extends State<MainViewWidget> {
   }
 
   void showTtsSelectDialog() {
-    showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-              title: new Text(StringClass.DIALOG_TITLE_TTS),
-              content: new Text(StringClass.DIALOG_MESSAGE_TTS),
-              actions: <Widget>[
-                new FlatButton(
-                  child: new Text(StringClass.YES),
-                  onPressed: () {
-                    _isUsingTTS = true;
-                    getOverlay();
-                    Navigator.of(context, rootNavigator: true).pop('dialog');
-                  },
-                ),
-                new FlatButton(
-                  child: new Text(StringClass.NO),
-                  onPressed: () {
-                    _isUsingTTS = false;
-                    getOverlay();
-                    Navigator.of(context, rootNavigator: true).pop('dialog');
-                  },
-                ),
-              ],
-            ));
+    // distance check
+    _geolocator
+        .distanceBetween(
+            _current_position.latitude,
+            _current_position.longitude,
+            _currentPlaceData.latitude,
+            _currentPlaceData.longitude)
+        .then((value) {
+      print(
+          "distance : $value , limit max : $NAVI_LIMIT_DISTANCE_MAX , min : $NAVI_LIMIT_DISTANCE_MIN");
+      if (NAVI_LIMIT_DISTANCE_MIN <= value &&
+          value <= NAVI_LIMIT_DISTANCE_MAX) {
+        showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+                  title: new Text(StringClass.DIALOG_TITLE_TTS),
+                  content: new Text(StringClass.DIALOG_MESSAGE_TTS),
+                  actions: <Widget>[
+                    new FlatButton(
+                      child: new Text(StringClass.YES),
+                      onPressed: () {
+                        _isUsingTTS = true;
+                        _isNaviStarted = true;
+                        getOverlay();
+                        Navigator.of(context, rootNavigator: true)
+                            .pop('dialog');
+                      },
+                    ),
+                    new FlatButton(
+                      child: new Text(StringClass.NO),
+                      onPressed: () {
+                        _isUsingTTS = false;
+                        getOverlay();
+                        Navigator.of(context, rootNavigator: true)
+                            .pop('dialog');
+                      },
+                    ),
+                  ],
+                ));
+      } else {
+        Fluttertoast.showToast(
+            msg: StringClass.NAVI_ERR_MSG,
+            backgroundColor: Colors.lightBlue,
+            gravity: ToastGravity.CENTER);
+      }
+    });
   }
 }

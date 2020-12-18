@@ -20,16 +20,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   DATABASE = await $FloorMyDatabase.databaseBuilder('my_database.db').build();
   runApp(MyApp());
-  if(DEBUG){
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);
-    test();
-  } else {
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  if (Platform.isAndroid) {
+    if (DEBUG) {
+      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);
+      test();
+    } else {
+      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    }
   }
   stderr.writeln('App start');
   developer.log('log me', name: 'App start');
-
-
 }
 
 class MyApp extends StatelessWidget {
@@ -64,7 +64,6 @@ void checkNetworkConnection(BuildContext context) async {
         backgroundColor: Colors.lightBlue,
         gravity: ToastGravity.CENTER);
     SystemChannels.platform.invokeMethod('SystemNavigator.pop');
-
   }
 }
 
@@ -105,7 +104,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Image.asset("asset/images/logo.png",width: 300,height: 300,),
+                        Image.asset(
+                          "asset/images/logo.png",
+                          width: 300,
+                          height: 300,
+                        ),
                         Text(StringClass.LABEL, style: TextStyle(fontSize: 50)),
                       ],
                     )))));
@@ -172,10 +175,14 @@ class _MyHomePageState extends State<MyHomePage> {
         bool using = ds[FIELD_USING];
         Map<dynamic, dynamic> image = ds[FIELD_IMAGE];
         String image_base = nullCheck(image[FIELD_IMAGE_BASE]);
-        String image_elevator = nullImageCheck(image[FIELD_IMAGE_ELEVATOR],image_base);
-        String image_gyungsaro = nullImageCheck(image[FIELD_IMAGE_GYUNGSARO],image_base);
-        String image_parking = nullImageCheck(image[FIELD_IMAGE_PARKING],image_base);
-        String image_restroom = nullImageCheck(image[FIELD_IMAGE_RESTROOM],image_base);
+        String image_elevator =
+            nullImageCheck(image[FIELD_IMAGE_ELEVATOR], image_base);
+        String image_gyungsaro =
+            nullImageCheck(image[FIELD_IMAGE_GYUNGSARO], image_base);
+        String image_parking =
+            nullImageCheck(image[FIELD_IMAGE_PARKING], image_base);
+        String image_restroom =
+            nullImageCheck(image[FIELD_IMAGE_RESTROOM], image_base);
         PlaceData pd = PlaceData(
             ds.documentID,
             address,

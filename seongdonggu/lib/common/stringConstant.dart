@@ -28,6 +28,7 @@ class StringClass{
   static String RESTARTED = "재안내";
   static String CURRENT_LOCATION = "현재위치";
   static String NETWORK_ERR_MSG = "네트워크 상태를 확인 후 재실행 해주세요.";
+  static String NAVI_ERR_MSG = "경로 안내 범위에 해당하지 않습니다.";
   static String COMMENT_HINT = "의견을 입력해주세요.";
   static String NA = "NA";
 

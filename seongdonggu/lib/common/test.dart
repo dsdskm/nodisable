@@ -2,7 +2,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 test() {
   //addNoticeText();
-  addData();
+  //addData();
+  addTestData();
+}
+
+void addTestData() {
+  addLocation(
+      "서울특별시 성동구 왕십리로 89(성수1가 685-697번지)",
+      "체육시설",
+      "체육시설",
+      "02-2204-7620",
+      "http://dsdskm.com/nodisable/seongdonggu/base.jpg",
+      37.549770, 126.824349,
+      "성동구민종합체육센터(Test)",
+      true);
 }
 
 void addData() {
@@ -283,6 +296,34 @@ void addLocation(
       .collection('location')
       .document(
           "SportsFacilities" + DateTime.now().millisecondsSinceEpoch.toString())
+      .setData({
+    "address": address,
+    "category1": category,
+    "category2": category,
+    "contact": contact,
+    "image": {"base": "$base"},
+    "latitude": lat,
+    "longitude": lon,
+    "name": name,
+    "using": use,
+  });
+}
+void addTestLocation(
+    String collection,
+    String docu_prefix,
+    String address,
+    String category,
+    String category2,
+    String contact,
+    String base,
+    double lat,
+    double lon,
+    String name,
+    bool use) {
+  Firestore.instance
+      .collection(collection)
+      .document(
+          "docu_prefix" + DateTime.now().millisecondsSinceEpoch.toString())
       .setData({
     "address": address,
     "category1": category,
