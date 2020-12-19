@@ -263,10 +263,10 @@ class MainViewState extends State<MainViewWidget> {
             color: Colors.transparent,
             child: PopupMenuButton<int>(
               itemBuilder: (context) => [
-                PopupMenuItem(value: 0, child: AutoSizeText(StringClass.NOTICE)),
-                PopupMenuItem(value: 1, child: AutoSizeText(StringClass.REVIEW)),
-                PopupMenuItem(value: 2, child: AutoSizeText(StringClass.OSS)),
-                PopupMenuItem(value: 3, child: AutoSizeText(StringClass.EXIT)),
+                PopupMenuItem(value: 0, child: Text(StringClass.NOTICE)),
+                PopupMenuItem(value: 1, child: Text(StringClass.REVIEW)),
+                PopupMenuItem(value: 2, child: Text(StringClass.OSS)),
+                PopupMenuItem(value: 3, child: Text(StringClass.EXIT)),
               ],
               onSelected: (value) => {menuSelected(value)},
             )));
@@ -361,6 +361,7 @@ class MainViewState extends State<MainViewWidget> {
             AutoSizeText(
               _currentPlaceData.summary,
               style: TextStyle(fontSize: 17),
+              maxLines: 2,
               textAlign: TextAlign.center,
             ),
           ],
