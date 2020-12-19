@@ -48,6 +48,7 @@ class NoticeViewState extends State<NoticeViewWidget> {
                   String image = ds[FIELD_IMAGE];
                   NoticeData data =
                       new NoticeData(ds.documentID, title, content, image);
+                  print("data $data");
                   list.add(data);
                 }
                 DATABASE.noticeDao.insertAll(list);

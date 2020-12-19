@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -10,7 +11,9 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:in_app_review/in_app_review.dart';
-import 'package:progress_dialog/progress_dialog.dart';
+import 'package:ndialog/ndialog.dart';
+
+// import 'package:progress_dialog/progress_dialog.dart';
 import 'package:seongdonggu/common/cahced.dart';
 import 'package:seongdonggu/common/constants.dart';
 import 'package:seongdonggu/common/stringConstant.dart';
@@ -83,9 +86,9 @@ class MainViewState extends State<MainViewWidget> {
     _geolocator
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
         .then((Position position) {
-      print("getCurrentLocation position $position");
       setState(() {
-        if (DEBUG) {
+        print("DEBUG $DEBUG _isNaviStarted $_isNaviStarted getCurrentLocation position $position");
+        if (DEBUG && _isNaviStarted) {
           _current_position = getFakePosition();
         } else {
           _current_position = position;
@@ -187,11 +190,17 @@ class MainViewState extends State<MainViewWidget> {
   HashMap<String, List<DropdownMenuItem>> dropDownHash = new HashMap();
   HashMap<String, List<String>> dropDownStringHash = new HashMap();
 
+  ProgressDialog _progressDialog;
+
   @override
   Widget build(BuildContext context) {
     appVersionCheck(context);
     initDropDownList();
     print("build isShowingMap $_isShowingMap");
+    _progressDialog = new ProgressDialog(
+      context,
+      message: Text(StringClass.NAVI_LOADING),
+    );
     return Scaffold(
         body: Stack(children: [
       mapWidget(),
@@ -215,7 +224,7 @@ class MainViewState extends State<MainViewWidget> {
       if (data.depth == 0) {
         DropdownMenuItem menuItem = DropdownMenuItem(
             child: Container(
-                child: Text(
+                child: AutoSizeText(
               data.value,
               style: TextStyle(fontSize: 20),
             )),
@@ -234,7 +243,7 @@ class MainViewState extends State<MainViewWidget> {
       if (data.depth == 1) {
         DropdownMenuItem submenuItem = DropdownMenuItem(
             child: Container(
-                child: Text(
+                child: AutoSizeText(
               data.value,
               style: TextStyle(fontSize: 20),
             )),
@@ -254,9 +263,10 @@ class MainViewState extends State<MainViewWidget> {
             color: Colors.transparent,
             child: PopupMenuButton<int>(
               itemBuilder: (context) => [
-                PopupMenuItem(value: 0, child: Text(StringClass.NOTICE)),
-                PopupMenuItem(value: 1, child: Text(StringClass.REVIEW)),
-                PopupMenuItem(value: 2, child: Text(StringClass.EXIT)),
+                PopupMenuItem(value: 0, child: AutoSizeText(StringClass.NOTICE)),
+                PopupMenuItem(value: 1, child: AutoSizeText(StringClass.REVIEW)),
+                PopupMenuItem(value: 2, child: AutoSizeText(StringClass.OSS)),
+                PopupMenuItem(value: 3, child: AutoSizeText(StringClass.EXIT)),
               ],
               onSelected: (value) => {menuSelected(value)},
             )));
@@ -279,9 +289,11 @@ class MainViewState extends State<MainViewWidget> {
         );
         break;
       case 2:
-        SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => LicensePage()));
         break;
       case 3:
+        SystemChannels.platform.invokeMethod('SystemNavigator.pop');
         break;
     }
   }
@@ -341,15 +353,15 @@ class MainViewState extends State<MainViewWidget> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
+            AutoSizeText(
               "[${_currentPlaceData.category2}]${_currentPlaceData.name}",
               style: TextStyle(fontSize: 20),
-              textAlign: TextAlign.start,
+              textAlign: TextAlign.center,
             ),
-            Text(
+            AutoSizeText(
               _currentPlaceData.summary,
               style: TextStyle(fontSize: 17),
-              textAlign: TextAlign.start,
+              textAlign: TextAlign.center,
             ),
           ],
         ));
@@ -362,9 +374,9 @@ class MainViewState extends State<MainViewWidget> {
       alignment: Alignment.bottomCenter,
       child: Column(
         children: <Widget>[
-          Text("[${_currentPlaceData.category2}]${_currentPlaceData.name}",
+          AutoSizeText("[${_currentPlaceData.category2}]${_currentPlaceData.name}",
               style: TextStyle(fontSize: 20)),
-          Text(_currentTtsDescription, style: TextStyle(fontSize: 25)),
+          AutoSizeText(_currentTtsDescription, style: TextStyle(fontSize: 25)),
           Container(
             width: SIZE_WIDTH / 2,
             height: SIZE_WIDTH / 2,
@@ -380,7 +392,7 @@ class MainViewState extends State<MainViewWidget> {
                   !isArrived
                       ? Container(
                           child: FlatButton(
-                          child: Text(
+                          child: AutoSizeText(
                             StringClass.RESTARTED,
                             style: TextStyle(fontSize: 20),
                           ),
@@ -393,7 +405,7 @@ class MainViewState extends State<MainViewWidget> {
                         ))
                       : Container(
                           child: FlatButton(
-                            child: Text(
+                            child: AutoSizeText(
                               StringClass.ARRIVE,
                               style: TextStyle(fontSize: 20),
                             ),
@@ -407,7 +419,7 @@ class MainViewState extends State<MainViewWidget> {
                   !isArrived
                       ? Container(
                           child: FlatButton(
-                          child: Text(
+                          child: AutoSizeText(
                             StringClass.CANCEL,
                             style: TextStyle(fontSize: 20),
                           ),
@@ -450,21 +462,21 @@ class MainViewState extends State<MainViewWidget> {
                       ]),
                   tabs: <Widget>[
                     Tab(
-                      child: Text(
+                      child: AutoSizeText(
                         StringClass.TAB_LABEL_GYUNGSARO,
                         style: TextStyle(color: Colors.black, fontSize: 13),
                       ),
                     ),
                     Tab(
-                      child: Text(StringClass.TAB_LABEL_RESTROOM,
+                      child: AutoSizeText(StringClass.TAB_LABEL_RESTROOM,
                           style: TextStyle(color: Colors.black, fontSize: 13)),
                     ),
                     Tab(
-                      child: Text(StringClass.TAB_LABEL_ELEVATOR,
+                      child: AutoSizeText(StringClass.TAB_LABEL_ELEVATOR,
                           style: TextStyle(color: Colors.black, fontSize: 13)),
                     ),
                     Tab(
-                      child: Text(StringClass.TAB_LABEL_PARKING,
+                      child: AutoSizeText(StringClass.TAB_LABEL_PARKING,
                           style: TextStyle(color: Colors.black, fontSize: 13)),
                     ),
                   ],
@@ -508,10 +520,11 @@ class MainViewState extends State<MainViewWidget> {
                     child: Column(children: [
                       Image.asset("asset/images/navi.png",
                           width: 30, height: 30),
-                      Text(StringClass.NAVI),
+                      AutoSizeText(StringClass.NAVI),
                     ]),
                     onPressed: () {
                       print("current location $_current_position");
+                      fake_index = 0;
                       showTtsSelectDialog();
                     },
                   ),
@@ -519,7 +532,7 @@ class MainViewState extends State<MainViewWidget> {
                     child: Column(children: [
                       Image.asset("asset/images/call.png",
                           width: 30, height: 30),
-                      Text(StringClass.CALL),
+                      AutoSizeText(StringClass.CALL),
                     ]),
                     onPressed: () {
                       print("current location $_current_position");
@@ -530,7 +543,7 @@ class MainViewState extends State<MainViewWidget> {
                     child: Column(children: [
                       Image.asset("asset/images/cancel.png",
                           width: 30, height: 30),
-                      Text(StringClass.CANCEL),
+                      AutoSizeText(StringClass.CANCEL),
                     ]),
                     onPressed: () {
                       hideDetail();
@@ -554,18 +567,13 @@ class MainViewState extends State<MainViewWidget> {
 
   void getOverlay(bool start) async {
     print("getOverlay");
-    if (start) {
-      ProgressDialog pr = new ProgressDialog(context,
-          type: ProgressDialogType.Normal,
-          isDismissible: false,
-          showLogs: true);
-      pr.show();
-    }
 
     _polyLineList.clear();
     _geolocator
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
-        .then((Position position) {
+        .then((Position position) async {
+      await Future.delayed(Duration(seconds: 1));
+      _progressDialog.dismiss();
       setState(() {
         if (DEBUG) {
           _current_position = getFakePosition();
@@ -676,7 +684,7 @@ class MainViewState extends State<MainViewWidget> {
           text = StringClass.TTS_VOID;
         }
         print("tts text $text");
-        flutterTts.speak(text).then((value) => {
+        await flutterTts.speak(text).then((value) => {
               flutterTts.setCompletionHandler(() async {
                 for (int i = 0; i < naviListForTTS.length; i++) {
                   NaviData nv = naviListForTTS[i];
@@ -689,7 +697,9 @@ class MainViewState extends State<MainViewWidget> {
                     naviListForTTS.clear();
                     stopNavi();
                     tts = StringClass.TTS_ARRIVED;
+                    await flutterTts.speak(tts);
                     showToast(StringClass.TTS_ARRIVED);
+                    return;
                   }
                   if (_isUsingTTS && _isNaviStarted) {
                     print("tts text $tts");
@@ -747,18 +757,19 @@ class MainViewState extends State<MainViewWidget> {
                       onPressed: () {
                         _isUsingTTS = true;
                         _isNaviStarted = true;
-                        getOverlay(true);
                         Navigator.of(context, rootNavigator: true)
                             .pop('dialog');
+                        _progressDialog.show();
+                        getOverlay(true);
                       },
                     ),
                     new FlatButton(
                       child: new Text(StringClass.NO),
                       onPressed: () {
                         _isUsingTTS = false;
-                        getOverlay(true);
                         Navigator.of(context, rootNavigator: true)
                             .pop('dialog');
+                        getOverlay(true);
                       },
                     ),
                   ],

@@ -61,13 +61,11 @@ List<Position> FAKE_POST_LIST2 = [
 int fake_index = 0;
 
 getFakePosition() {
+
   if (fake_index < FAKE_POST_LIST.length - 1) {
     fake_index++;
   }
+  print("getFakePosition ${FAKE_POST_LIST[fake_index]}");
   return FAKE_POST_LIST[fake_index];
-  // if(fake_index==FAKE_POST_LIST.length){
-  //   fake_index = 0;
-  // }
-  // return FAKE_POST_LIST[fake_index];
 }
 

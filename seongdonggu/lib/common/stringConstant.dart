@@ -6,9 +6,11 @@ class StringClass{
   static String TAB_LABEL_PARKING = "주차장";
   static String CALL="전화";
   static String NAVI="길찾기";
+  static String NAVI_LOADING="길찾는중";
   static String CANCEL="취소";
   static String REVIEW="리뷰";
   static String NOTICE="공지사항";
+  static String OSS="오픈소스";
   static String COMMENT="의견 공유";
   static String SEND="보내기";
   static String GO_MARKET="플레이 스토어 리뷰";
