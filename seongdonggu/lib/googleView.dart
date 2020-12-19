@@ -589,6 +589,7 @@ class MainViewState extends State<MainViewWidget> {
             .then((value) {
           _polyLineList = value;
           setState(() {
+            _progressDialog.dismiss();
             CAMERA_POSITION_CENTER = CameraPosition(
                 target: LatLng(
                     _current_position.latitude, _current_position.longitude),
