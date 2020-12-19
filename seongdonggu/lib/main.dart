@@ -28,6 +28,8 @@ void main() async {
     } else {
       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     }
+  } else {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
   stderr.writeln('App start');
   developer.log('log me', name: 'App start');

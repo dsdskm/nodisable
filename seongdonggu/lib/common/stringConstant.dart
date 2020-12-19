@@ -8,7 +8,7 @@ class StringClass{
   static String NAVI="길찾기";
   static String NAVI_LOADING="길찾는중";
   static String CANCEL="취소";
-  static String REVIEW="리뷰";
+  static String REVIEW="의견 보내기";
   static String NOTICE="공지사항";
   static String OSS="오픈소스";
   static String COMMENT="의견 공유";
