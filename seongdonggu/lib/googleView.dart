@@ -87,7 +87,8 @@ class MainViewState extends State<MainViewWidget> {
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
         .then((Position position) {
       setState(() {
-        print("DEBUG $DEBUG _isNaviStarted $_isNaviStarted getCurrentLocation position $position");
+        print(
+            "DEBUG $DEBUG _isNaviStarted $_isNaviStarted getCurrentLocation position $position");
         if (DEBUG && _isNaviStarted) {
           _current_position = getFakePosition();
         } else {
@@ -375,7 +376,8 @@ class MainViewState extends State<MainViewWidget> {
       alignment: Alignment.bottomCenter,
       child: Column(
         children: <Widget>[
-          AutoSizeText("[${_currentPlaceData.category2}]${_currentPlaceData.name}",
+          AutoSizeText(
+              "[${_currentPlaceData.category2}]${_currentPlaceData.name}",
               style: TextStyle(fontSize: 20)),
           AutoSizeText(_currentTtsDescription, style: TextStyle(fontSize: 25)),
           Container(
@@ -503,10 +505,27 @@ class MainViewState extends State<MainViewWidget> {
   getTapImageView(String path) {
     if (path == null || path.isEmpty) {
       path = _currentPlaceData.image_base;
+      return Stack(
+        children: [
+          Container(
+            alignment: Alignment.center,
+            child: Image.network(path),
+          ),
+          Container(
+            alignment: Alignment.center,
+            child: Text(
+              StringClass.READY,
+              style: TextStyle(backgroundColor: Colors.white),
+            ),
+          )
+        ],
+      );
+    } else {
+      return Container(
+        alignment: Alignment.center,
+        child: Image.network(path),
+      );
     }
-    return Container(
-      child: Image.network(path),
-    );
   }
 
   bottomView() {

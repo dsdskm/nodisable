@@ -39,5 +39,6 @@ class StringClass{
   static String NA = "NA";
   static String UPDATE_TITLE = "앱 업데이트";
   static String UPDATE_MESSAGE = "앱 업데이트 이후 사용가능합니다.";
+  static String READY = "준비중입니다";
 
 }

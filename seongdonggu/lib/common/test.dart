@@ -4,6 +4,29 @@ test() {
   // addNoticeText();
   // addData();
   // deleteTestData();
+  // updateBaseImage();
+}
+
+Future<void> updateBaseImage() async {
+  QuerySnapshot qs =
+      await Firestore.instance.collection('location').getDocuments();
+  for (int i = 0; i < qs.documents.length; i++) {
+    String docu = qs.documents[i].documentID;
+    print("docu $docu");
+    var o = {
+      "base":
+          'https://firebasestorage.googleapis.com/v0/b/nodisable.appspot.com/o/ready.png?alt=media&token=6a6b0cee-e3a3-4354-9ba7-7cfd1d835145',
+      "elevator": '',
+      "gyungsaro": '',
+      "parking": '',
+      "restroom": ''
+    };
+
+    Firestore.instance
+        .collection('location')
+        .document(docu)
+        .updateData({"image": o});
+  }
 }
 
 Future<void> deleteTestData() async {
@@ -360,14 +383,24 @@ _addNoticeText(String title, String content, String image) {
 }
 
 addNoticeText() {
-  _addNoticeText("공지사항1","내용1","http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
-  _addNoticeText("공지사항2","내용1","http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
-  _addNoticeText("공지사항3","내용1","http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
-  _addNoticeText("공지사항4","내용1","http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
-  _addNoticeText("공지사항555555555555555555","내용1","http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
-  _addNoticeText("공지사항6","내용1","http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
-  _addNoticeText("공지사항7","내용1","http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
-  _addNoticeText("공지사항8","내용1","http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
-  _addNoticeText("공지사항9","내용1","http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
-  _addNoticeText("공지사항10","내용1","http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
+  _addNoticeText(
+      "공지사항1", "내용1", "http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
+  _addNoticeText(
+      "공지사항2", "내용1", "http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
+  _addNoticeText(
+      "공지사항3", "내용1", "http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
+  _addNoticeText(
+      "공지사항4", "내용1", "http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
+  _addNoticeText("공지사항555555555555555555", "내용1",
+      "http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
+  _addNoticeText(
+      "공지사항6", "내용1", "http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
+  _addNoticeText(
+      "공지사항7", "내용1", "http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
+  _addNoticeText(
+      "공지사항8", "내용1", "http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
+  _addNoticeText(
+      "공지사항9", "내용1", "http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
+  _addNoticeText(
+      "공지사항10", "내용1", "http://dsdskm.com/nodisable/seongdonggu/image4.jpg");
 }
