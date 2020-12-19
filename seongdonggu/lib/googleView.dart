@@ -701,6 +701,7 @@ class MainViewState extends State<MainViewWidget> {
                     tts = StringClass.TTS_ARRIVED;
                     await flutterTts.speak(tts);
                     showToast(StringClass.TTS_ARRIVED);
+                    setState(() {});
                     return;
                   }
                   if (_isUsingTTS && _isNaviStarted) {
