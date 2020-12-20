@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:developer' as developer;
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
@@ -114,7 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           width: 300,
                           height: 300,
                         ),
-                        Text(StringClass.LABEL, style: TextStyle(fontSize: 50)),
+                        AutoSizeText(StringClass.LABEL, style: TextStyle(fontSize: 40),maxLines: 1,),
                       ],
                     )))));
   }
