@@ -76,7 +76,7 @@ class CommentViewState extends State<CommentViewWidget> {
                   onPressed: () {
                     LaunchReview.launch(
                         androidAppId: "com.kkh.seongdonggu",
-                        iOSAppId: "com.kkh.seongdonggu");
+                        iOSAppId: "1545829754");
                   },
                 ),
               )
