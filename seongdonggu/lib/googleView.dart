@@ -710,7 +710,7 @@ class MainViewState extends State<MainViewWidget> {
                     print("tts text $tts");
                     await flutterTts.speak(tts);
                     flutterTts.setCompletionHandler(() {
-                      ttsHash[nv.description] = nv.description;
+                      ttsHash[nv.description] = nv.description.trim();
                     });
                   }
                 }
