@@ -720,6 +720,11 @@ class MainViewState extends State<MainViewWidget> {
 
       }
       setState(() {});
+    } else {
+      await flutterTts.speak(StringClass.TTS_ARRIVED);
+      showToast(StringClass.TTS_ARRIVED);
+      setState(() {});
+      return;
     }
   }
 
