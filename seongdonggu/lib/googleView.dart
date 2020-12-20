@@ -371,7 +371,6 @@ class MainViewState extends State<MainViewWidget> {
 
   naviDetailContentView() {
     print("naviDetailContentView $_currentTtsDescription");
-    bool isArrived = _currentTtsDescription == StringClass.ARRIVE;
     return Container(
       alignment: Alignment.bottomCenter,
       child: Column(
@@ -392,50 +391,34 @@ class MainViewState extends State<MainViewWidget> {
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  !isArrived
-                      ? Container(
-                          child: FlatButton(
-                          child: AutoSizeText(
-                            StringClass.RESTARTED,
-                            style: TextStyle(fontSize: 20),
-                          ),
-                          onPressed: () {
-                            getOverlay(true);
-                            if (_isUsingTTS) {
-                              flutterTts.speak(StringClass.TTS_RESTARTED);
-                            }
-                          },
-                        ))
-                      : Container(
-                          child: FlatButton(
-                            child: AutoSizeText(
-                              StringClass.ARRIVE,
-                              style: TextStyle(fontSize: 20),
-                            ),
-                            onPressed: () {
-                              _currentTtsDescription = "";
-                              _isNaviStarted = false;
-                              showDetailView(_currentPlaceData);
-                            },
-                          ),
-                        ),
-                  !isArrived
-                      ? Container(
-                          child: FlatButton(
-                          child: AutoSizeText(
-                            StringClass.CANCEL,
-                            style: TextStyle(fontSize: 20),
-                          ),
-                          onPressed: () {
-                            _isNaviStarted = false;
-                            hideDetail();
-                            if (_isUsingTTS) {
-                              stopNavi();
-                              flutterTts.speak(StringClass.TTS_CANCELED);
-                            }
-                          },
-                        ))
-                      : Container()
+                  Container(
+                      child: FlatButton(
+                    child: AutoSizeText(
+                      StringClass.RESTARTED,
+                      style: TextStyle(fontSize: 20),
+                    ),
+                    onPressed: () {
+                      getOverlay(true);
+                      if (_isUsingTTS) {
+                        flutterTts.speak(StringClass.TTS_RESTARTED);
+                      }
+                    },
+                  )),
+                  Container(
+                      child: FlatButton(
+                    child: AutoSizeText(
+                      StringClass.CANCEL,
+                      style: TextStyle(fontSize: 20),
+                    ),
+                    onPressed: () {
+                      _isNaviStarted = false;
+                      hideDetail();
+                      if (_isUsingTTS) {
+                        stopNavi();
+                        flutterTts.speak(StringClass.TTS_CANCELED);
+                      }
+                    },
+                  ))
                 ],
               ))
         ],
