@@ -592,7 +592,6 @@ class MainViewState extends State<MainViewWidget> {
     _geolocator
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
         .then((Position position) async {
-      await Future.delayed(Duration(seconds: 1));
       _progressDialog.dismiss();
       setState(() {
         if (DEBUG) {
@@ -670,6 +669,7 @@ class MainViewState extends State<MainViewWidget> {
   FlutterTts flutterTts = FlutterTts();
 
   void checkDistance() async {
+    _progressDialog.dismiss();
     // tts check
     if (NAVI_LIST != null) {
       List<NaviData> naviListForTTS = new List();
