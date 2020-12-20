@@ -55,14 +55,14 @@ class MainViewState extends State<MainViewWidget> {
   PlaceData _currentPlaceData;
   Timer _timer;
   List<Polyline> _polyLineList = List<Polyline>();
-  static double _zoom = 18;
+  static double _zoom = 15;
   bool _isNaviStarted = false;
   String _currentTtsDescription = "";
   bool _isUsingTTS = false;
 
   GoogleMapController _controller;
   CameraPosition CAMERA_POSITION_CENTER = CameraPosition(
-    target: LatLng(37.570660, 127.034145),
+    target: LatLng(37.56293282386673, 127.03693424203551),
     zoom: _zoom,
   );
 
@@ -398,6 +398,7 @@ class MainViewState extends State<MainViewWidget> {
                       style: TextStyle(fontSize: 20),
                     ),
                     onPressed: () {
+                      _progressDialog.show();
                       getOverlay(true);
                       if (_isUsingTTS) {
                         flutterTts.speak(StringClass.TTS_RESTARTED);
@@ -434,7 +435,7 @@ class MainViewState extends State<MainViewWidget> {
         child: Column(
           children: <Widget>[
             Container(
-                padding: EdgeInsets.all(7),
+                padding: EdgeInsets.all(3),
                 child: TabBar(
                   indicatorColor: Colors.blue,
                   indicatorWeight: 1,
@@ -450,20 +451,25 @@ class MainViewState extends State<MainViewWidget> {
                     Tab(
                       child: AutoSizeText(
                         StringClass.TAB_LABEL_GYUNGSARO,
-                        style: TextStyle(color: Colors.black, fontSize: 13),
+                        maxLines: 1,
+                        style: TextStyle(color: Colors.black, fontSize: 12),
                       ),
                     ),
                     Tab(
                       child: AutoSizeText(StringClass.TAB_LABEL_RESTROOM,
-                          style: TextStyle(color: Colors.black, fontSize: 13)),
+                          maxLines: 1,
+                          style: TextStyle(color: Colors.black, fontSize: 12)),
                     ),
                     Tab(
                       child: AutoSizeText(StringClass.TAB_LABEL_ELEVATOR,
-                          style: TextStyle(color: Colors.black, fontSize: 13)),
+                          maxLines: 1,
+                          minFontSize: 9,
+                          style: TextStyle(color: Colors.black, fontSize: 12)),
                     ),
                     Tab(
                       child: AutoSizeText(StringClass.TAB_LABEL_PARKING,
-                          style: TextStyle(color: Colors.black, fontSize: 13)),
+                          maxLines: 1,
+                          style: TextStyle(color: Colors.black, fontSize: 12)),
                     ),
                   ],
                 )),
