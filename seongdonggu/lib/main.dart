@@ -44,6 +44,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     //checkNetworkConnection(context);
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: StringClass.LABEL,
       theme: ThemeData(
         primarySwatch: Colors.blue,
