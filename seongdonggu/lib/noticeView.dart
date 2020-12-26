@@ -36,7 +36,7 @@ class NoticeViewState extends State<NoticeViewWidget> {
             child: Container(
           child: StreamBuilder<QuerySnapshot>(
             stream:
-                Firestore.instance.collection(COLLECTION_NOTICE).snapshots(),
+                Firestore.instance.collection(COLLECTION_NOTICE).orderBy(FIELD_TIME,descending: true).snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 List<NoticeData> list = new List();

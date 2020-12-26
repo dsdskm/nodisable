@@ -72,7 +72,9 @@ class NoticeDetailViewState extends State<NoticeDetailViewWidget> {
                                 fontSize: 17, fontWeight: FontWeight.normal),
                           ),
                         ),
-                        Image.network(data.image)
+                        data.image != null && data.image.isNotEmpty
+                            ? Image.network(data.image)
+                            : Container()
                       ],
                     ));
               }
@@ -87,5 +89,4 @@ class NoticeDetailViewState extends State<NoticeDetailViewWidget> {
     super.dispose();
     _commentController.clear();
   }
-
 }
