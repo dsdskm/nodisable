@@ -48,6 +48,7 @@ class MainViewState extends State<MainViewWidget> {
   double MAP_WIDTH = SIZE_WIDTH;
   double MAP_HEIGHT = SIZE_HEIGHT;
   final Geolocator _geolocator = Geolocator()..forceAndroidLocationManager;
+
   Position _current_position;
   int _selectedCategory1 = 0;
   int _selectedCategory2 = 0;
