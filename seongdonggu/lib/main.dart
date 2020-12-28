@@ -36,8 +36,6 @@ void main() async {
   developer.log('log me', name: 'App start');
 }
 
-
-
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
@@ -116,7 +114,11 @@ class _MyHomePageState extends State<MyHomePage> {
                           width: 300,
                           height: 300,
                         ),
-                        AutoSizeText(StringClass.LABEL, style: TextStyle(fontSize: 40),maxLines: 1,),
+                        AutoSizeText(
+                          StringClass.LABEL,
+                          style: TextStyle(fontSize: 40),
+                          maxLines: 1,
+                        ),
                       ],
                     )))));
   }
@@ -181,15 +183,22 @@ class _MyHomePageState extends State<MyHomePage> {
         String summary = nullCheck(ds[FIELD_SUMMARY]);
         bool using = ds[FIELD_USING];
         Map<dynamic, dynamic> image = ds[FIELD_IMAGE];
-        String image_base = nullCheck(image[FIELD_IMAGE_BASE]);
-        String image_elevator =
-        nullImageCheck(image[FIELD_IMAGE_ELEVATOR], image_base);
-        String image_gyungsaro =
-        nullImageCheck(image[FIELD_IMAGE_GYUNGSARO], image_base);
-        String image_parking =
-        nullImageCheck(image[FIELD_IMAGE_PARKING], image_base);
-        String image_restroom =
-        nullImageCheck(image[FIELD_IMAGE_RESTROOM], image_base);
+        String image_base = "";
+        String image_elevator = "";
+        String image_gyungsaro = "";
+        String image_parking = "";
+        String image_restroom = "";
+        if (image != null) {
+          image_base = nullCheck(image[FIELD_IMAGE_BASE]);
+          image_elevator =
+              nullImageCheck(image[FIELD_IMAGE_ELEVATOR], image_base);
+          image_gyungsaro =
+              nullImageCheck(image[FIELD_IMAGE_GYUNGSARO], image_base);
+          image_parking =
+              nullImageCheck(image[FIELD_IMAGE_PARKING], image_base);
+          image_restroom =
+              nullImageCheck(image[FIELD_IMAGE_RESTROOM], image_base);
+        }
         PlaceData pd = PlaceData(
             ds.documentID,
             address,

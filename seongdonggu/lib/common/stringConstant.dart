@@ -40,5 +40,7 @@ class StringClass{
   static String UPDATE_TITLE = "앱 업데이트";
   static String UPDATE_MESSAGE = "앱 업데이트 이후 사용가능합니다.";
   static String READY = "준비중입니다";
+  static String DIALOG_TITLE_EXIT = "종료";
+  static String DIALOG_MESSAGE_EXIT = "앱을 종료하시겠습니까?";
 
 }

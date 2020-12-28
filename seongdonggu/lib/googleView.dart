@@ -79,6 +79,7 @@ class MainViewState extends State<MainViewWidget> {
 
   @override
   void dispose() {
+    print("dispose");
     _timer.cancel();
   }
 
@@ -122,9 +123,12 @@ class MainViewState extends State<MainViewWidget> {
               List<String> subDropDownStringList =
                   dropDownStringHash[selected1];
               String selected2 = subDropDownStringList[_selectedCategory2];
-              if (category1 == selected1 && category2 == selected2) {
+              if (selected1.contains(category1) && category2 == selected2) {
                 filtered_list.add(data);
-              } else if (selected2 == StringClass.ALL) {
+              } else if (selected1.contains(category1) &&
+                  selected2 == StringClass.ALL) {
+                filtered_list.add(data);
+              } else if (category1 == StringClass.ALL) {
                 filtered_list.add(data);
               }
             }
@@ -154,6 +158,8 @@ class MainViewState extends State<MainViewWidget> {
         });
   }
 
+  Marker _currentLocationMarker;
+
   Set<Marker> createMarker(List<PlaceData> list) {
     print("createMarker");
     for (int i = 0; i < list.length; i++) {
@@ -170,17 +176,18 @@ class MainViewState extends State<MainViewWidget> {
       markers.add(marker);
     }
 
-    if (DEBUG) {
-      if (_current_position != null) {
-        Marker marker = Marker(
-            markerId: MarkerId("current"),
-            position:
-                LatLng(_current_position.latitude, _current_position.longitude),
-            icon: BitmapDescriptor.defaultMarker,
-            infoWindow: InfoWindow(title: StringClass.CURRENT_LOCATION),
-            onTap: () {});
-        markers.add(marker);
+    if (_current_position != null) {
+      if (_currentLocationMarker != null) {
+        markers.remove(_currentLocationMarker);
       }
+      _currentLocationMarker = Marker(
+          markerId: MarkerId("current"),
+          position:
+              LatLng(_current_position.latitude, _current_position.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(90),
+          infoWindow: InfoWindow(title: StringClass.CURRENT_LOCATION),
+          onTap: () {});
+      markers.add(_currentLocationMarker);
     }
     return markers;
   }
@@ -203,13 +210,41 @@ class MainViewState extends State<MainViewWidget> {
       context,
       message: Text(StringClass.NAVI_LOADING),
     );
-    return Scaffold(
-        body: Stack(children: [
-      mapWidget(),
-      dropDownView(),
-      menuView(),
-      _isShowingMap ? Container() : detailView()
-    ]));
+    return WillPopScope(
+        child: Scaffold(
+            body: Stack(children: [
+          mapWidget(),
+          dropDownView(),
+          menuView(),
+          _isShowingMap ? Container() : detailView()
+        ])),
+        onWillPop: () async {
+          showExitDialog();
+          return false;
+        });
+  }
+
+  void showExitDialog() {
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: new Text(StringClass.DIALOG_TITLE_EXIT),
+              content: new Text(StringClass.DIALOG_MESSAGE_EXIT),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text(StringClass.YES),
+                  onPressed: () {
+                    SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+                  },
+                ),
+                new FlatButton(
+                  child: new Text(StringClass.NO),
+                  onPressed: () {
+                    Navigator.of(context, rootNavigator: true).pop('dialog');
+                  },
+                ),
+              ],
+            ));
   }
 
   void initDropDownList() {
@@ -226,10 +261,12 @@ class MainViewState extends State<MainViewWidget> {
       if (data.depth == 0) {
         DropdownMenuItem menuItem = DropdownMenuItem(
             child: Container(
+                width: 80,
                 child: AutoSizeText(
-              data.value,
-              style: TextStyle(fontSize: 20),
-            )),
+                  data.value,
+                  minFontSize: 7,
+                  style: TextStyle(fontSize: 20),
+                )),
             value: dropDownMenuItemList.length);
         dropDownMenuItemSet.add(data.value);
         dropDownList.add(data.value);
@@ -245,10 +282,12 @@ class MainViewState extends State<MainViewWidget> {
       if (data.depth == 1) {
         DropdownMenuItem submenuItem = DropdownMenuItem(
             child: Container(
+                width: 80,
                 child: AutoSizeText(
-              data.value,
-              style: TextStyle(fontSize: 20),
-            )),
+                  data.value,
+                  minFontSize: 7,
+                  style: TextStyle(fontSize: 20),
+                )),
             value: data.index);
         dropDownHash[data.category].add(submenuItem);
         dropDownStringHash[data.category].add(data.value);
@@ -265,6 +304,7 @@ class MainViewState extends State<MainViewWidget> {
             color: Colors.transparent,
             child: PopupMenuButton<int>(
               itemBuilder: (context) => [
+                PopupMenuItem(value: 4, child: Text(StringClass.GO_UPDATE)),
                 PopupMenuItem(value: 0, child: Text(StringClass.NOTICE)),
                 PopupMenuItem(value: 1, child: Text(StringClass.REVIEW)),
                 PopupMenuItem(value: 2, child: Text(StringClass.OSS)),
@@ -297,6 +337,9 @@ class MainViewState extends State<MainViewWidget> {
       case 3:
         SystemChannels.platform.invokeMethod('SystemNavigator.pop');
         break;
+      case 4:
+        Navigator.popAndPushNamed(context, MainView.route);
+        break;
     }
   }
 
@@ -319,29 +362,28 @@ class MainViewState extends State<MainViewWidget> {
         "detailView width ${SIZE_WIDTH / 1.5} , _isNaviStarted $_isNaviStarted");
     if (_currentPlaceData != null) {
       if (_isNaviStarted) {
-        return Align(
+        return Container(
+            constraints: BoxConstraints.expand(),
+            margin: EdgeInsets.only(top: MAP_HEIGHT),
+            height: SIZE_HEIGHT,
             alignment: Alignment.bottomCenter,
-            child: Container(
-                alignment: Alignment.bottomCenter,
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [naviDetailContentView()])));
+            child: ListView(children: [naviDetailContentView()]));
       } else {
-        return Align(
+        return Container(
+            constraints: BoxConstraints.expand(),
+            margin: EdgeInsets.only(top: MAP_HEIGHT),
+            height: SIZE_HEIGHT,
             alignment: Alignment.bottomCenter,
-            child: Container(
-                alignment: Alignment.bottomCenter,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    titleView(),
-                    Padding(padding: EdgeInsets.all(5)),
-                    tabView(),
-                    bottomView(),
-                  ],
-                )));
+            child: ListView(
+              // crossAxisAlignment: CrossAxisAlignment.center,
+              // mainAxisSize: MainAxisSize.min,
+              children: [
+                titleView(),
+                Padding(padding: EdgeInsets.all(5)),
+                tabView(),
+                bottomView(),
+              ],
+            ));
       }
     }
     return Container();
@@ -357,15 +399,20 @@ class MainViewState extends State<MainViewWidget> {
           children: [
             AutoSizeText(
               "[${_currentPlaceData.category2}]${_currentPlaceData.name}",
+              minFontSize: 3,
+              maxLines: 1,
               style: TextStyle(fontSize: 20),
               textAlign: TextAlign.center,
             ),
-            AutoSizeText(
-              _currentPlaceData.summary,
-              style: TextStyle(fontSize: 17),
-              maxLines: 2,
-              textAlign: TextAlign.center,
-            ),
+            _currentPlaceData.summary.length > 0
+                ? AutoSizeText(
+                    _currentPlaceData.summary,
+                    style: TextStyle(fontSize: 17),
+                    minFontSize: 3,
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                  )
+                : Container(),
           ],
         ));
   }
@@ -378,8 +425,13 @@ class MainViewState extends State<MainViewWidget> {
         children: <Widget>[
           AutoSizeText(
               "[${_currentPlaceData.category2}]${_currentPlaceData.name}",
+              minFontSize: 5,
+              maxLines: 1,
               style: TextStyle(fontSize: 20)),
-          AutoSizeText(_currentTtsDescription, style: TextStyle(fontSize: 25)),
+          _currentTtsDescription.length > 0
+              ? AutoSizeText(_currentTtsDescription,
+                  minFontSize: 5, maxLines: 1, style: TextStyle(fontSize: 25))
+              : Container(),
           Container(
             width: SIZE_WIDTH / 2,
             height: SIZE_WIDTH / 2,
@@ -452,24 +504,27 @@ class MainViewState extends State<MainViewWidget> {
                     Tab(
                       child: AutoSizeText(
                         StringClass.TAB_LABEL_GYUNGSARO,
+                        minFontSize: 5,
                         maxLines: 1,
                         style: TextStyle(color: Colors.black, fontSize: 12),
                       ),
                     ),
                     Tab(
                       child: AutoSizeText(StringClass.TAB_LABEL_RESTROOM,
+                          minFontSize: 5,
                           maxLines: 1,
                           style: TextStyle(color: Colors.black, fontSize: 12)),
                     ),
                     Tab(
                       child: AutoSizeText(StringClass.TAB_LABEL_ELEVATOR,
                           maxLines: 1,
-                          minFontSize: 9,
+                          minFontSize: 5,
                           style: TextStyle(color: Colors.black, fontSize: 12)),
                     ),
                     Tab(
                       child: AutoSizeText(StringClass.TAB_LABEL_PARKING,
                           maxLines: 1,
+                          minFontSize: 5,
                           style: TextStyle(color: Colors.black, fontSize: 12)),
                     ),
                   ],
@@ -519,8 +574,7 @@ class MainViewState extends State<MainViewWidget> {
   }
 
   bottomView() {
-    return Align(
-        alignment: Alignment.bottomCenter,
+    return Expanded(
         child: Container(
             alignment: Alignment.bottomCenter,
             child: Row(
@@ -618,7 +672,7 @@ class MainViewState extends State<MainViewWidget> {
     return Container(
         height: TOP_BAR_HEIGHT,
         alignment: Alignment.centerLeft,
-        margin: EdgeInsets.only(right: 10, left: 10, top: PADDING_TOP),
+        margin: EdgeInsets.only(right: 20, left: 20, top: PADDING_TOP),
         color: Colors.transparent,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
