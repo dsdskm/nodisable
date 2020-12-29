@@ -363,7 +363,7 @@ class MainViewState extends State<MainViewWidget> {
         target: LatLng(_currentPlaceData.latitude, _currentPlaceData.longitude),
         zoom: _zoom);
     setState(() {
-      MAP_HEIGHT = SIZE_HEIGHT / 5 * 3;
+      MAP_HEIGHT = SIZE_HEIGHT / 6 * 4;
       _isShowingMap = false;
       _controller
           .moveCamera(CameraUpdate.newCameraPosition(CAMERA_POSITION_CENTER));
@@ -377,14 +377,14 @@ class MainViewState extends State<MainViewWidget> {
       if (_isNaviStarted) {
         return Container(
             margin: EdgeInsets.only(top: MAP_HEIGHT),
-            height: SIZE_HEIGHT / 5*2,
+            height: SIZE_HEIGHT / 6*2,
             alignment: Alignment.bottomCenter,
             child: ListView(children: [naviDetailContentView()]));
       } else {
         return Container(
             margin: EdgeInsets.only(top: MAP_HEIGHT),
             padding: EdgeInsets.only(top:0),
-            height: SIZE_HEIGHT / 5*2,
+            height: SIZE_HEIGHT / 6*2,
             alignment: Alignment.topCenter,
             child: ListView(
 
@@ -416,13 +416,13 @@ class MainViewState extends State<MainViewWidget> {
               "[${_currentPlaceData.category2}]${_currentPlaceData.name}",
               minFontSize: 3,
               maxLines: 1,
-              style: TextStyle(fontSize: 20),
+              style: TextStyle(fontSize: 15),
               textAlign: TextAlign.center,
             ),
             _currentPlaceData.summary.length > 0
                 ? AutoSizeText(
                     _currentPlaceData.summary,
-                    style: TextStyle(fontSize: 17),
+                    style: TextStyle(fontSize: 13),
                     minFontSize: 3,
                     maxLines: 1,
                     textAlign: TextAlign.center,
@@ -499,14 +499,15 @@ class MainViewState extends State<MainViewWidget> {
     return DefaultTabController(
       length: 4,
       child: SizedBox(
-        height: SIZE_HEIGHT / 4,
+        height: SIZE_HEIGHT / 5,
         child: Column(
           children: <Widget>[
             Container(
-                padding: EdgeInsets.all(3),
+                padding: EdgeInsets.all(1),
                 child: TabBar(
                   indicatorColor: Colors.blue,
                   indicatorWeight: 1,
+                  indicatorPadding: EdgeInsets.all(0),
                   indicator: BoxDecoration(
                       color: Colors.blue,
                       borderRadius: const BorderRadius.all(
