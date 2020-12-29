@@ -90,13 +90,13 @@ class NoticeViewState extends State<NoticeViewWidget> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                        width: SIZE_WIDTH * 2 / 4,
+                        width: MediaQuery.of(context).size.width * 2 / 4,
                         child: Text(
                           data.title,
                           style: TextStyle(color: Colors.black, fontSize: 20),
                         )),
                     Container(
-                        width: SIZE_WIDTH * 1 / 4,
+                        width: MediaQuery.of(context).size.width * 1 / 4,
                         child: Text(
                           getDateText(int.parse(data.docu)),
                           textAlign: TextAlign.center,

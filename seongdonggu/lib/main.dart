@@ -40,6 +40,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    // setSize(MediaQuery.of(context));
     //checkNetworkConnection(context);
     return MaterialApp(
       debugShowCheckedModeBanner: false,

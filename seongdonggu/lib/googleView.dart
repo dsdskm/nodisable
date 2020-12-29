@@ -32,6 +32,7 @@ class MainView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // setSize(MediaQuery.of(context));
     return MaterialApp(routes: <String, WidgetBuilder>{
       route: (BuildContext context) => new MainViewWidget(),
       NoticeView.route: (BuildContext context) => NoticeViewWidget(),
@@ -45,10 +46,9 @@ class MainViewWidget extends StatefulWidget {
 }
 
 class MainViewState extends State<MainViewWidget> {
+  final Geolocator _geolocator = Geolocator()..forceAndroidLocationManager;
   double MAP_WIDTH = SIZE_WIDTH;
   double MAP_HEIGHT = SIZE_HEIGHT;
-  final Geolocator _geolocator = Geolocator()..forceAndroidLocationManager;
-
   Position _current_position;
   int _selectedCategory1 = 0;
   int _selectedCategory2 = 0;
@@ -57,15 +57,18 @@ class MainViewState extends State<MainViewWidget> {
   Timer _timer;
   List<Polyline> _polyLineList = List<Polyline>();
   static double _zoom = 15;
+  static double _zoom_init = 13;
   bool _isNaviStarted = false;
   String _currentTtsDescription = "";
   bool _isUsingTTS = false;
 
   GoogleMapController _controller;
   CameraPosition CAMERA_POSITION_CENTER = CameraPosition(
-    target: LatLng(37.56293282386673, 127.03693424203551),
-    zoom: _zoom,
+    target: LatLng(37.520841, 126.983231),
+    zoom: _zoom_init,
   );
+
+  bool _isSetMapCenter = false;
 
   @override
   void initState() {
@@ -95,6 +98,15 @@ class MainViewState extends State<MainViewWidget> {
           _current_position = getFakePosition();
         } else {
           _current_position = position;
+        }
+        if (!_isSetMapCenter) {
+          _isSetMapCenter = true;
+          CAMERA_POSITION_CENTER = CameraPosition(
+              target: LatLng(
+                  _current_position.latitude, _current_position.longitude),
+              zoom: _zoom);
+          _controller.moveCamera(
+              CameraUpdate.newCameraPosition(CAMERA_POSITION_CENTER));
         }
         print("update current position $_current_position");
         checkDistance();
@@ -203,6 +215,7 @@ class MainViewState extends State<MainViewWidget> {
 
   @override
   Widget build(BuildContext context) {
+    setSize(MediaQuery.of(context));
     appVersionCheck(context);
     initDropDownList();
     print("build isShowingMap $_isShowingMap");
@@ -350,7 +363,7 @@ class MainViewState extends State<MainViewWidget> {
         target: LatLng(_currentPlaceData.latitude, _currentPlaceData.longitude),
         zoom: _zoom);
     setState(() {
-      MAP_HEIGHT = SIZE_HEIGHT / 2;
+      MAP_HEIGHT = SIZE_HEIGHT / 5 * 3;
       _isShowingMap = false;
       _controller
           .moveCamera(CameraUpdate.newCameraPosition(CAMERA_POSITION_CENTER));
@@ -359,27 +372,28 @@ class MainViewState extends State<MainViewWidget> {
 
   detailView() {
     print(
-        "detailView width ${SIZE_WIDTH / 1.5} , _isNaviStarted $_isNaviStarted");
+        "detailView _isNaviStarted $_isNaviStarted");
     if (_currentPlaceData != null) {
       if (_isNaviStarted) {
         return Container(
-            constraints: BoxConstraints.expand(),
             margin: EdgeInsets.only(top: MAP_HEIGHT),
-            height: SIZE_HEIGHT,
+            height: SIZE_HEIGHT / 5*2,
             alignment: Alignment.bottomCenter,
             child: ListView(children: [naviDetailContentView()]));
       } else {
         return Container(
-            constraints: BoxConstraints.expand(),
             margin: EdgeInsets.only(top: MAP_HEIGHT),
-            height: SIZE_HEIGHT,
-            alignment: Alignment.bottomCenter,
+            padding: EdgeInsets.only(top:0),
+            height: SIZE_HEIGHT / 5*2,
+            alignment: Alignment.topCenter,
             child: ListView(
+
+              shrinkWrap: true,
+              padding: EdgeInsets.only(top:0),
               // crossAxisAlignment: CrossAxisAlignment.center,
               // mainAxisSize: MainAxisSize.min,
               children: [
                 titleView(),
-                Padding(padding: EdgeInsets.all(5)),
                 tabView(),
                 bottomView(),
               ],
@@ -391,8 +405,9 @@ class MainViewState extends State<MainViewWidget> {
 
   titleView() {
     return Container(
-        padding: EdgeInsets.only(top: 10),
-        color: Colors.transparent,
+        margin: EdgeInsets.only(top: 0),
+        padding: EdgeInsets.only(top: 0),
+        alignment: Alignment.topCenter,
         width: SIZE_WIDTH,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -484,7 +499,7 @@ class MainViewState extends State<MainViewWidget> {
     return DefaultTabController(
       length: 4,
       child: SizedBox(
-        height: SIZE_HEIGHT / 3,
+        height: SIZE_HEIGHT / 4,
         child: Column(
           children: <Widget>[
             Container(
@@ -529,7 +544,7 @@ class MainViewState extends State<MainViewWidget> {
                     ),
                   ],
                 )),
-            Padding(padding: EdgeInsets.all(5)),
+            Padding(padding: EdgeInsets.all(1)),
             Expanded(
               child: TabBarView(
                 children: <Widget>[
@@ -540,7 +555,7 @@ class MainViewState extends State<MainViewWidget> {
                 ],
               ),
             ),
-            Padding(padding: EdgeInsets.all(5)),
+            Padding(padding: EdgeInsets.all(1)),
           ],
         ),
       ),
@@ -583,8 +598,10 @@ class MainViewState extends State<MainViewWidget> {
                   FlatButton(
                     child: Column(children: [
                       Image.asset("asset/images/navi.png",
-                          width: 30, height: 30),
-                      AutoSizeText(StringClass.NAVI),
+                          width: 20, height: 20),
+                      AutoSizeText(
+                        StringClass.NAVI,
+                      ),
                     ]),
                     onPressed: () {
                       print("current location $_current_position");
@@ -595,8 +612,10 @@ class MainViewState extends State<MainViewWidget> {
                   FlatButton(
                     child: Column(children: [
                       Image.asset("asset/images/call.png",
-                          width: 30, height: 30),
-                      AutoSizeText(StringClass.CALL),
+                          width: 20, height: 20),
+                      AutoSizeText(
+                        StringClass.CALL,
+                      ),
                     ]),
                     onPressed: () {
                       print("current location $_current_position");
@@ -606,8 +625,10 @@ class MainViewState extends State<MainViewWidget> {
                   FlatButton(
                     child: Column(children: [
                       Image.asset("asset/images/cancel.png",
-                          width: 30, height: 30),
-                      AutoSizeText(StringClass.CANCEL),
+                          width: 20, height: 20),
+                      AutoSizeText(
+                        StringClass.CANCEL,
+                      ),
                     ]),
                     onPressed: () {
                       hideDetail();
