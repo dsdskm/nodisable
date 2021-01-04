@@ -1,4 +1,5 @@
 class NaviData {
+  String type;
   dynamic coordinates;
   int index;
   int pointIndex;
@@ -9,12 +10,12 @@ class NaviData {
   String pointType;
 
 
-  NaviData(this.coordinates, this.index, this.pointIndex, this.name,
+  NaviData(this.type, this.coordinates, this.index, this.pointIndex, this.name,
       this.guidePointName, this.description, this.turnType, this.pointType);
 
   @override
   String toString() {
-    return 'NaviData{coordinates: $coordinates, index: $index, pointIndex: $pointIndex, name: $name, guidePointName: $guidePointName, description: $description, turnType: $turnType, pointType: $pointType}';
+    return 'NaviData{type: $type, coordinates: $coordinates, index: $index, pointIndex: $pointIndex, name: $name, guidePointName: $guidePointName, description: $description, turnType: $turnType, pointType: $pointType}';
   }
 
 // factory NaviData.fromJson(Map<String, dynamic> json) {

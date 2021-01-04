@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:screen/screen.dart';
 import 'package:seongdonggu/common/cahced.dart';
 import 'package:seongdonggu/common/stringConstant.dart';
 import 'package:seongdonggu/common/util.dart';
@@ -33,6 +34,7 @@ class NoticeDetailViewState extends State<NoticeDetailViewWidget> {
 
   @override
   Widget build(BuildContext context) {
+    Screen.keepOn(true);
     return Scaffold(
         appBar: AppBar(title: Text(StringClass.NOTICE)),
         body: Center(

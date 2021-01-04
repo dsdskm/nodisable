@@ -4,10 +4,10 @@ import 'dart:developer' as developer;
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:screen/screen.dart';
 import 'package:seongdonggu/common/constants.dart';
 import 'package:seongdonggu/common/stringConstant.dart';
 import 'package:seongdonggu/common/cahced.dart';
@@ -20,6 +20,7 @@ import 'package:seongdonggu/googleView.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Screen.keepOn(true);
   DATABASE = await $FloorMyDatabase.databaseBuilder('my_database.db').build();
   runApp(MyApp());
   if (Platform.isAndroid) {
@@ -225,6 +226,7 @@ class _MyHomePageState extends State<MyHomePage> {
           list.add(pd);
         }
       }
+      PLACE_LIST = list;
       DATABASE.placeDao.insertAll(list);
       syncCategory();
     });

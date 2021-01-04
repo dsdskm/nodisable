@@ -35,8 +35,11 @@ final FIELD_TIME = "time";
 final FIELD_TEXT = "text";
 final FIELD_CONTENT = "content";
 
-final CURRENT_LOCATION_CHECK_DELAY = 20;
+var CURRENT_LOCATION_CHECK_DELAY = 15;
 final NAVI_LIST_DISTANCE = 10;
 final NAVI_LIMIT_DISTANCE_MAX = 1000;
 final NAVI_LIMIT_DISTANCE_MIN = 50;
 final RELEASE = "release_1.0";
+final NAVI_DETAIL_BOTTOM_HEIGHT = 100.0;
+
+enum TtsState { playing, stopped }
