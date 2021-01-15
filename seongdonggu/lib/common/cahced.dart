@@ -139,6 +139,6 @@ getFakePosition() {
 }
 
 getFont(int value){
-  print("getFont ${RATIO * value}");
-  return RATIO * value;
+  // print("getFont ${RATIO * value}");
+  return ((RATIO * value).toInt()+2).toDouble();
 }

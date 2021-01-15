@@ -44,7 +44,7 @@ class MainView extends StatelessWidget {
 
 class MainViewWidget extends StatefulWidget {
   @override
-  MainViewState createState() => MainViewState("AA");
+  MainViewState createState() => MainViewState();
 }
 
 class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
@@ -84,8 +84,6 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       forceAndroidLocationManager: true,
       timeInterval: 1);
 
-  MainViewState(String s);
-
   void trackGeoLocation() async {
     print("trackGeoLocation");
     final PermissionStatus permission = await PermissionHandler()
@@ -116,7 +114,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     print("fetchLocation");
     askPermission();
     await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high,
-    forceAndroidLocationManager: true).timeout(Duration(seconds: 5)).then((value) {
+    forceAndroidLocationManager: true).timeout(Duration(seconds: CURRENT_LOCATION_CHECK_DELAY)).then((value) {
       print("fetchLocation _current_position $value");
       setState(() {
         _current_position = value;
