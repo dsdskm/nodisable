@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_tts_improved/flutter_tts_improved.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:naver_map_plugin/naver_map_plugin.dart';
 import 'package:ndialog/ndialog.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:screen/screen.dart';
@@ -55,23 +55,21 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   int _selectedCategoryRadius = 0;
   int _selectedCategory1 = 0;
   int _selectedCategory2 = 0;
-  bool _isShowingMap = true;
+  bool _isShowingMapOnly = true;
   PlaceData _currentPlaceData;
   Timer _timer;
-  List<Polyline> _polyLineList = List<Polyline>();
-  static double _zoom = 18;
-  static double _zoom_init = 13;
+  List<PathOverlay> _polyLineList = List<PathOverlay>();
+  static double _zoom = 14;
+  static double _zoom_init = 12;
   bool _isNaviStarted = false;
   String _currentTtsDescription = "";
   bool _isUsingTTS = false;
 
-  GoogleMapController _controller;
-  double _lastBearing = 999;
+  NaverMapController _controller;
   CameraPosition CAMERA_POSITION_CENTER = CameraPosition(
     target: LatLng(37.520841, 126.983231),
     zoom: _zoom_init,
   );
-
   bool _isSetMapCenter = false;
   MyStack.Stack<NaviData> NAVI_DATA_STACK = MyStack.Stack<NaviData>();
   bool _isInitDrop = false;
@@ -83,6 +81,9 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       distanceFilter: 10,
       forceAndroidLocationManager: true,
       timeInterval: 1);
+
+  Map<String, double> _distanceHash = new HashMap();
+  List<LatLng> LATLNG_LIST = new List();
 
   void trackGeoLocation() async {
     print("trackGeoLocation");
@@ -99,7 +100,6 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     print("askPermission");
     PermissionHandler().requestPermissions(
         [PermissionGroup.locationWhenInUse]).then(__onStatusRequested);
-
   }
 
   void __onStatusRequested(Map<PermissionGroup, PermissionStatus> statuses) {
@@ -113,14 +113,16 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   void fetchLocation() async {
     print("fetchLocation");
     askPermission();
-    await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high,
-    forceAndroidLocationManager: true).timeout(Duration(seconds: CURRENT_LOCATION_CHECK_DELAY)).then((value) {
+    await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+            forceAndroidLocationManager: true)
+        .timeout(Duration(seconds: CURRENT_LOCATION_CHECK_DELAY))
+        .then((value) {
       print("fetchLocation _current_position $value");
       setState(() {
         _current_position = value;
       });
     });
-
   }
 
   startLocationMonitoring() {
@@ -131,9 +133,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     getCurrentLocation();
     _timer = Timer.periodic(Duration(seconds: CURRENT_LOCATION_CHECK_DELAY),
         (timer) {
-          getCurrentLocation();
+      getCurrentLocation();
     });
-
   }
 
   @override
@@ -141,7 +142,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     super.initState();
     print("initState");
     Screen.keepOn(true);
-    WidgetsBinding.instance.addObserver(this);
+    // WidgetsBinding.instance.removeObserver(this);
+    // WidgetsBinding.instance.addObserver(this);
     startLocationMonitoring();
 
     _flutterTts.setStartHandler(() {
@@ -159,7 +161,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    print("dispose");
+    super.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _timer.cancel();
   }
@@ -168,32 +170,73 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
       print("didChangeAppLifecycleState paused");
-      _timer.cancel();
-      stopNavi();
+      // _timer.cancel();
+      // stopNavi();
     }
     if (state == AppLifecycleState.resumed) {
       print("didChangeAppLifecycleState resumed");
-      Navigator.popAndPushNamed(context, MainView.route);
-      startLocationMonitoring();
+      // Navigator.popAndPushNamed(context, MainView.route);
+      // startLocationMonitoring();
     }
   }
 
-  moveCameraPosition(double bearing) {
-    print("moveCameraPosition bearing $bearing");
-    CAMERA_POSITION_CENTER = CameraPosition(
-        target: LatLng(_current_position.latitude, _current_position.longitude),
-        zoom: 18,
-        bearing: bearing);
+  moveCameraPositionSimply(double lat, double lon, [double zoom]) {
+    if (zoom != null) {
+      CAMERA_POSITION_CENTER =
+          CameraPosition(target: LatLng(lat, lon), zoom: zoom);
+    } else {
+      CAMERA_POSITION_CENTER = CameraPosition(target: LatLng(lat, lon));
+    }
+
     if (_controller != null) {
       _controller
-          .moveCamera(CameraUpdate.newCameraPosition(CAMERA_POSITION_CENTER));
+          .moveCamera(CameraUpdate.toCameraPosition(CAMERA_POSITION_CENTER));
+    }
+  }
+
+  moveCameraPosition(double lat, double lon, double bearing, bool fit,
+      [int gap]) {
+    double zoom = _zoom;
+    if (fit && gap != null) {
+      switch (gap) {
+        case 0:
+          zoom = 16;
+          break;
+        case 1:
+          zoom = 15.5;
+          break;
+        case 2:
+          zoom = 15;
+          break;
+        case 3:
+          zoom = 14.5;
+          break;
+        case 4:
+          zoom = 14;
+          break;
+      }
+    }
+    print(
+        "moveCameraPosition zoom $zoom gap $gap bearing $bearing fit $fit LATLNG_LIST ${LATLNG_LIST.length}");
+    CAMERA_POSITION_CENTER =
+        CameraPosition(target: LatLng(lat, lon), zoom: zoom, bearing: bearing);
+
+    if (_controller != null) {
+      _controller
+          .moveCamera(CameraUpdate.toCameraPosition(CAMERA_POSITION_CENTER));
+      // if (fit && LATLNG_LIST.length >= 2) {
+      //   _controller.moveCamera(CameraUpdate.fitBounds(
+      //       LatLngBounds.fromLatLngList(LATLNG_LIST),
+      //       padding: 200));
+      // }
     }
   }
 
   getCurrentLocation() async {
-    print("getCurrentLocation by timer");
+    print("getCurrentLocation");
     await Geolocator.checkPermission();
     _current_position = await Geolocator.getCurrentPosition();
+    print("getCurrentLocation _current_position $_current_position");
     askPermission();
     if (DEBUG && _isNaviStarted) {
       _current_position = getFakePosition();
@@ -201,11 +244,10 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     print(
         "getCurrentLocation _isNaviStarted $_isNaviStarted _isSetMapCenter $_isSetMapCenter current $_current_position");
     if (!_isSetMapCenter) {
-      // 마지막 베어링 유지하면서 이동
-      moveCameraPosition(0);
-      _isSetMapCenter = true;
+      moveCameraPosition(
+          _current_position.latitude, _current_position.longitude, 0, true);
       setState(() {
-        updateFilteredList();
+        updateFilteredList(true);
       });
     } else {}
 
@@ -216,7 +258,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     }
   }
 
-  Set<Marker> markers = new Set();
+  List<Marker> markers = new List();
 
   Widget mapWidget() {
     print("mapWidget");
@@ -224,106 +266,77 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       updateFilteredList();
       _isInitDrop = true;
     }
-    return Container(
-        padding: EdgeInsets.only(top: PADDING_TOP + TOP_BAR_HEIGHT),
-        width: MAP_WIDTH,
-        height: MAP_HEIGHT,
-        child: GoogleMap(
-          polylines: _polyLineList.toSet(),
-          initialCameraPosition: CAMERA_POSITION_CENTER,
-          mapToolbarEnabled: false,
-          markers: createMarker(),
-          circles: createCircle(),
-          mapType: MapType.normal,
-          myLocationEnabled: true,
-          myLocationButtonEnabled: true,
-          compassEnabled: false,
-          onMapCreated: (GoogleMapController controller) {
-            _controller = controller;
-          },
-          zoomControlsEnabled: true,
-          zoomGesturesEnabled: true,
-          rotateGesturesEnabled: true,
-          onTap: (LatLng latLng) {
-            hideDetail();
-          },
-        ));
-  }
 
-// Widget mapWidget_() {
-//   return FutureBuilder(
-//       future: DATABASE.placeDao.getAllPlace(),
-//       builder: (context, snapshot) {
-//         if (snapshot.hasData) {
-//           markers.clear();
-//           List<PlaceData> list = snapshot.data;
-//           List<PlaceData> filtered_list = List();
-//           for (int i = 0; i < list.length; i++) {
-//             PlaceData data = list[i];
-//             String category1 = data.category1;
-//             String category2 = data.category2;
-//             String selected1 = dropDownList[_selectedCategory1];
-//             List<String> subDropDownStringList =
-//                 dropDownStringHash[selected1];
-//             String selected2 = subDropDownStringList[_selectedCategory2];
-//
-//             double distance = await geolocator.distanceBetween(
-//                 _current_position.latitude,
-//                 _current_position.longitude,
-//                 data.latitude,
-//                 data.longitude);
-//             if (selected1.contains(category1) && category2 == selected2) {
-//               filtered_list.add(data);
-//             } else if (selected1.contains(category1) &&
-//                 selected2 == StringClass.ALL) {
-//               filtered_list.add(data);
-//             } else if (category1 == StringClass.ALL) {
-//               filtered_list.add(data);
-//             }
-//           }
-//           return Container(
-//               padding: EdgeInsets.only(top: PADDING_TOP + TOP_BAR_HEIGHT),
-//               width: MAP_WIDTH,
-//               height: MAP_HEIGHT,
-//               child: GoogleMap(
-//                 polylines: _polyLineList.toSet(),
-//                 initialCameraPosition: CAMERA_POSITION_CENTER,
-//                 mapToolbarEnabled: false,
-//                 markers: createMarker(filtered_list),
-//                 mapType: MapType.normal,
-//                 myLocationEnabled: true,
-//                 myLocationButtonEnabled: true,
-//                 compassEnabled: false,
-//                 onMapCreated: (GoogleMapController controller) {
-//                   _controller = controller;
-//                 },
-//                 zoomControlsEnabled: true,
-//                 zoomGesturesEnabled: true,
-//                 rotateGesturesEnabled: true,
-//                 onTap: (LatLng latLng) {
-//                   hideDetail();
-//                 },
-//               ));
-//         }
-//         return Container();
-//       });
-// }
+    return OrientationBuilder(builder: (_, orientation) {
+      if (orientation == Orientation.portrait) {
+        MAP_WIDTH = MediaQuery.of(context).size.width;
+        if (_isShowingMapOnly) {
+          MAP_HEIGHT = MediaQuery.of(context).size.height;
+        } else {
+          if (_isNaviStarted) {
+            MAP_HEIGHT = MediaQuery.of(context).size.height * 0.85;
+          } else {
+            MAP_HEIGHT = MediaQuery.of(context).size.height * 0.7;
+          }
+        }
+      } else {
+        MAP_HEIGHT = MediaQuery.of(context).size.height;
+        if (_isShowingMapOnly) {
+          MAP_WIDTH = MediaQuery.of(context).size.width;
+        } else {
+          if (_isNaviStarted) {
+            MAP_WIDTH =
+                MediaQuery.of(context).size.width - NAVI_DETAIL_RIGHT_WIDTH;
+          } else {
+            MAP_WIDTH = MediaQuery.of(context).size.width * 0.5;
+          }
+        }
+      }
+      print(
+          "mapWidget orientation $orientation MAP_WIDTH $MAP_WIDTH MAP_HEIGHT $MAP_HEIGHT _isShowingMapOnly $_isShowingMapOnly");
+      return Container(
+          padding: EdgeInsets.only(top: PADDING_TOP + TOP_BAR_HEIGHT),
+          width: MAP_WIDTH,
+          height: MAP_HEIGHT,
+          child: NaverMap(
+            pathOverlays: _polyLineList.toSet(),
+            initialCameraPosition: CAMERA_POSITION_CENTER,
+            markers: createMarker(),
+            circles: createCircle(),
+            tiltGestureEnable: true,
+            mapType: MapType.Basic,
+            onMapCreated: (controller) {
+              _controller = controller;
+            },
+            rotationGestureEnable: true,
+            locationButtonEnable: true,
+            initLocationTrackingMode: LocationTrackingMode.Follow,
+            zoomGestureEnable: true,
+            onMapTap: (latLng) {
+              hideDetail();
+            },
+            onMapDoubleTap: (latLng) {
+              hideDetail();
+            },
+          ));
+    });
+  }
 
   Marker _currentLocationMarker;
 
-  Set<Marker> createMarker() {
+  List<Marker> createMarker() {
     markers.clear();
     print("createMarker list ${FILTERED_LIST.length}");
     for (int i = 0; i < FILTERED_LIST.length; i++) {
       PlaceData data = FILTERED_LIST[i];
-      String title = "[${data.category2}] ${data.name}";
-      InfoWindow infoWindow = InfoWindow(title: title);
+      double distance = _distanceHash[data.docu];
+
+      String title = "[${data.category2}] ${data.name}~${distance.toInt()}m";
       Marker marker = Marker(
-          markerId: MarkerId(data.docu),
+          markerId: data.docu,
           position: LatLng(data.latitude, data.longitude),
-          icon: BitmapDescriptor.defaultMarker,
-          infoWindow: infoWindow,
-          onTap: () {
+          infoWindow: title,
+          onMarkerTab: (marker, iconSize) {
             stopNavi();
             showDetailView(data);
           });
@@ -336,12 +349,12 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
         markers.remove(_currentLocationMarker);
       }
       _currentLocationMarker = Marker(
-          markerId: MarkerId("current"),
-          position:
-              LatLng(_current_position.latitude, _current_position.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(90),
-          infoWindow: InfoWindow(title: StringClass.CURRENT_LOCATION),
-          onTap: () {});
+        markerId: "current",
+        position:
+            LatLng(_current_position.latitude, _current_position.longitude),
+        iconTintColor: Colors.blue,
+        infoWindow: StringClass.CURRENT_LOCATION,
+      );
       markers.add(_currentLocationMarker);
     }
 
@@ -350,9 +363,9 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       for (int j = 0; j < n.coordinates.length; j++) {
         if (n.coordinates != null) {
           Marker m = Marker(
-            markerId: MarkerId("navi$i$j"),
+            markerId: "navi$i$j",
             position: LatLng(n.coordinates[j][1], n.coordinates[j][0]),
-            icon: BitmapDescriptor.defaultMarkerWithHue(180),
+            iconTintColor: Color.fromARGB(255, 255, 0, 0),
           );
           markers.add(m);
         }
@@ -377,7 +390,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     setSize(MediaQuery.of(context));
     appVersionCheck(context);
     initDropDownList();
-    print("build isShowingMap $_isShowingMap");
+    print("build isShowingMap $_isShowingMapOnly");
     _progressDialog = new ProgressDialog(
       context,
       message: Text(StringClass.NAVI_LOADING),
@@ -388,7 +401,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
           mapWidget(),
           dropDownView(),
           menuView(),
-          _isShowingMap ? Container() : detailView()
+          _isShowingMapOnly ? Container() : detailView()
         ])),
         onWillPop: () async {
           showExitDialog();
@@ -468,13 +481,13 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     }
     // radius
     dropDownMenuRadiusItemList.clear();
-    var radius = ["전체", "1km", "3km", "5km", "10km"];
-    for (int i = 0; i < radius.length; i++) {
+
+    for (int i = 0; i < RADIUS.length; i++) {
       var dropdown = DropdownMenuItem(
           child: Container(
               width: 70,
               child: AutoSizeText(
-                radius[i],
+                RADIUS[i],
                 minFontSize: 5,
                 style: TextStyle(fontSize: 15),
               )),
@@ -534,63 +547,42 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     _currentPlaceData = data;
     print("showDetailView");
     CAMERA_POSITION_CENTER = CameraPosition(
-        target: LatLng(_currentPlaceData.latitude, _currentPlaceData.longitude),
-        zoom: _zoom);
+      target: LatLng(_currentPlaceData.latitude, _currentPlaceData.longitude),
+    );
     setState(() {
-      MAP_HEIGHT = SIZE_HEIGHT * 0.65;
-      _isShowingMap = false;
-      _controller
-          .moveCamera(CameraUpdate.newCameraPosition(CAMERA_POSITION_CENTER));
+      _isShowingMapOnly = false;
+      moveCameraPositionSimply(
+          _currentPlaceData.latitude, _currentPlaceData.longitude);
     });
   }
 
-  detailView() {
-    print("detailView _isNaviStarted $_isNaviStarted");
-    if (_currentPlaceData != null) {
-      if (_isNaviStarted) {
-        return Align(
-            alignment: Alignment.bottomCenter,
-            child: Wrap(children: [naviDetailContentView()]));
-      } else {
-        return Align(
-            alignment: Alignment.bottomCenter,
-            child: Wrap(
-              // shrinkWrap: true,
-              // padding: EdgeInsets.only(top: 0),
-              // crossAxisAlignment: CrossAxisAlignment.center,
-              // mainAxisSize: MainAxisSize.min,
-              children: [
-                titleView(),
-                tabView(),
-                bottomView(),
-              ],
-            ));
-      }
+  titleView(bool portrait) {
+    var width;
+    if (portrait) {
+      width = MediaQuery.of(context).size.width;
+    } else {
+      width = MediaQuery.of(context).size.width / 2;
     }
-    return Container();
-  }
-
-  titleView() {
+    print("titleView width $width portrait $portrait");
     return Container(
+        color: Colors.purple,
         margin: EdgeInsets.only(top: 0),
         padding: EdgeInsets.only(top: 0),
         alignment: Alignment.topCenter,
-        width: SIZE_WIDTH,
+        width: width,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AutoSizeText(
               "[${_currentPlaceData.category2}]${_currentPlaceData.name}",
-              minFontSize: 3,
+              style: TextStyle(fontSize: getFont(10, context)),
               maxLines: 1,
-              style: TextStyle(fontSize: 15),
               textAlign: TextAlign.center,
             ),
             _currentPlaceData.summary.length > 0
                 ? AutoSizeText(
                     _currentPlaceData.summary,
-                    style: TextStyle(fontSize: 13),
-                    minFontSize: 3,
+                    style: TextStyle(fontSize: getFont(10, context)),
                     maxLines: 1,
                     textAlign: TextAlign.center,
                   )
@@ -599,81 +591,204 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
         ));
   }
 
-  naviDetailContentView() {
-    print("naviDetailContentView $_currentTtsDescription");
-    return Container(
-      height: NAVI_DETAIL_BOTTOM_HEIGHT,
-      padding: EdgeInsets.only(top: 0),
-      margin: EdgeInsets.only(top: 0),
-      alignment: Alignment.bottomCenter,
-      child: Column(
-        children: <Widget>[
-          AutoSizeText(
-            "[${_currentPlaceData.category2}]${_currentPlaceData.name}",
-            minFontSize: 6,
-            maxFontSize: 15,
-            maxLines: 1,
-          ),
-          _currentTtsDescription.length > 0
-              ? AutoSizeText(_currentTtsDescription,
-                  minFontSize: 5, maxFontSize: 20, maxLines: 1)
-              : Container(),
-          Container(
-              margin: EdgeInsets.only(top: 10),
-              width: SIZE_WIDTH,
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Container(
-                      child: FlatButton(
-                    child: AutoSizeText(
-                      StringClass.RESTARTED,
-                      minFontSize: 6,
-                      maxFontSize: getFont(4),
-                    ),
-                    onPressed: () {
-                      _progressDialog.show();
-                      getOverlay(true);
-                      if (_isUsingTTS) {
-                        _flutterTts.speak(StringClass.TTS_RESTARTED);
-                      }
-                    },
-                  )),
-                  Container(
-                      child: FlatButton(
-                    child: AutoSizeText(
-                      StringClass.CANCEL,
-                      minFontSize: 6,
-                      maxFontSize: getFont(4),
-                    ),
-                    onPressed: () {
-                      _isNaviStarted = false;
-                      _controller.hideMarkerInfoWindow(
-                          MarkerId(_currentPlaceData.docu));
-
-                      stopNavi();
-                      if (_isUsingTTS) {
-                        _flutterTts.speak(StringClass.TTS_CANCELED);
-                      }
-                      hideDetail();
-                    },
-                  ))
-                ],
-              ))
-        ],
-      ),
-    );
+  detailView() {
+    print("detailView _isNaviStarted $_isNaviStarted");
+    if (_currentPlaceData != null) {
+      return OrientationBuilder(builder: (_, orientation) {
+        if (orientation == Orientation.portrait) {
+          if (_isNaviStarted) {
+            return Align(
+                alignment: Alignment.bottomCenter,
+                child: Wrap(children: [naviDetailContentView(true)]));
+          } else {
+            return Align(
+                alignment: Alignment.bottomCenter,
+                child: Wrap(
+                  children: [
+                    titleView(true),
+                    tabView(true),
+                    bottomView(true),
+                  ],
+                ));
+          }
+        } else {
+          if (_isNaviStarted) {
+            return Align(
+                alignment: Alignment.bottomRight,
+                child: naviDetailContentView(false));
+          } else {
+            return Align(
+                alignment: Alignment.bottomRight,
+                child: Container(
+                    width: MediaQuery.of(context).size.width / 2,
+                    height: MediaQuery.of(context).size.height -
+                        TOP_BAR_HEIGHT -
+                        PADDING_TOP,
+                    child: Flex(
+                      direction: Axis.vertical,
+                      children: [
+                        Expanded(child: titleView(false), flex: 1),
+                        Expanded(child: tabView(false), flex: 3),
+                        Expanded(child: bottomView(false), flex: 1),
+                      ],
+                    )));
+          }
+        }
+      });
+    }
+    return Container();
   }
 
-  tabView() {
+  naviDetailContentView(bool portrait) {
+    print("naviDetailContentView $_currentTtsDescription portrait $portrait");
+    var width;
+    var height;
+    if (portrait) {
+      width = MediaQuery.of(context).size.width;
+      height = NAVI_DETAIL_BOTTOM_HEIGHT;
+      return Container(
+        width: width,
+        height: height,
+        padding: EdgeInsets.only(top: 0),
+        margin: EdgeInsets.only(top: 0),
+        alignment: Alignment.bottomCenter,
+        child: Column(
+          children: <Widget>[
+            AutoSizeText(
+              "[${_currentPlaceData.category2}]${_currentPlaceData.name}",
+              style: TextStyle(fontSize: getFont(10, context)),
+              maxLines: 1,
+            ),
+            _currentTtsDescription.length > 0
+                ? AutoSizeText(_currentTtsDescription,
+                    style: TextStyle(fontSize: getFont(10, context)),
+                    maxLines: 1)
+                : Container(),
+            Container(
+                margin: EdgeInsets.only(top: 10),
+                width: SIZE_WIDTH,
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Container(
+                        child: FlatButton(
+                      child: AutoSizeText(
+                        StringClass.RESTARTED,
+                        style: TextStyle(fontSize: getFont(10,context)),
+                      ),
+                      onPressed: () {
+                        _progressDialog.show();
+                        isPassedFirstPos = false;
+                        getOverlay(true);
+                        if (_isUsingTTS) {
+                          _flutterTts.speak(StringClass.TTS_RESTARTED);
+                        }
+                      },
+                    )),
+                    Container(
+                        child: FlatButton(
+                      child: AutoSizeText(
+                        StringClass.CANCEL,
+                        style: TextStyle(fontSize: getFont(10,context)),
+                      ),
+                      onPressed: () {
+                        _isNaviStarted = false;
+                        // _controller.hideMarkerInfoWindow(
+                        //     MarkerId(_currentPlaceData.docu));
+
+                        stopNavi();
+                        if (_isUsingTTS) {
+                          _flutterTts.speak(StringClass.TTS_CANCELED);
+                        }
+                        hideDetail();
+                      },
+                    ))
+                  ],
+                ))
+          ],
+        ),
+      );
+    } else {
+      width = NAVI_DETAIL_RIGHT_WIDTH;
+      height =
+          MediaQuery.of(context).size.height - TOP_BAR_HEIGHT - PADDING_TOP;
+      return Container(
+        color: Colors.cyan,
+        width: width,
+        height: height,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            AutoSizeText(
+              "[${_currentPlaceData.category2}]${_currentPlaceData.name}",
+              style: TextStyle(fontSize: getFont(10,context)),
+              maxLines: 1,
+            ),
+            _currentTtsDescription.length > 0
+                ? AutoSizeText(_currentTtsDescription,
+                style: TextStyle(fontSize: getFont(10,context)), maxLines: 1)
+                : Container(),
+            Container(
+                child: FlatButton(
+              child: AutoSizeText(
+                StringClass.RESTARTED,
+                style: TextStyle(fontSize: getFont(10,context)),
+              ),
+              onPressed: () {
+                _progressDialog.show();
+                isPassedFirstPos = false;
+                getOverlay(true);
+                if (_isUsingTTS) {
+                  _flutterTts.speak(StringClass.TTS_RESTARTED);
+                }
+              },
+            )),
+            Container(
+                child: FlatButton(
+              child: AutoSizeText(
+                StringClass.CANCEL,
+                style: TextStyle(fontSize: getFont(10,context)),
+              ),
+              onPressed: () {
+                _isNaviStarted = false;
+                // _controller.hideMarkerInfoWindow(
+                //     MarkerId(_currentPlaceData.docu));
+
+                stopNavi();
+                if (_isUsingTTS) {
+                  _flutterTts.speak(StringClass.TTS_CANCELED);
+                }
+                hideDetail();
+              },
+            ))
+          ],
+        ),
+      );
+    }
+  }
+
+  tabView(bool portrait) {
+    var width;
+    var height;
+    if (portrait) {
+      width = MediaQuery.of(context).size.width;
+      height = MediaQuery.of(context).size.height / 5;
+    } else {
+      width = MediaQuery.of(context).size.width / 2;
+      height = MediaQuery.of(context).size.height / 2;
+    }
+    print("tabView width $width height $height portrait $portrait");
     return DefaultTabController(
       length: 4,
       child: SizedBox(
-        height: SIZE_HEIGHT / 5,
+        width: width,
+        height: height,
         child: Column(
           children: <Widget>[
             Container(
+                height: 30,
+                color: Colors.amber,
                 padding: EdgeInsets.all(1),
                 child: TabBar(
                   indicatorColor: Colors.blue,
@@ -691,28 +806,27 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                     Tab(
                       child: AutoSizeText(
                         StringClass.TAB_LABEL_GYUNGSARO,
-                        minFontSize: 5,
                         maxLines: 1,
-                        style: TextStyle(color: Colors.black, fontSize: 12),
+                        style: TextStyle(color: Colors.black, fontSize: getFont(12,context)),
                       ),
                     ),
                     Tab(
                       child: AutoSizeText(StringClass.TAB_LABEL_RESTROOM,
                           minFontSize: 5,
                           maxLines: 1,
-                          style: TextStyle(color: Colors.black, fontSize: 12)),
+                          style: TextStyle(color: Colors.black, fontSize: getFont(12,context))),
                     ),
                     Tab(
                       child: AutoSizeText(StringClass.TAB_LABEL_ELEVATOR,
                           maxLines: 1,
                           minFontSize: 5,
-                          style: TextStyle(color: Colors.black, fontSize: 12)),
+                          style: TextStyle(color: Colors.black, fontSize: getFont(12,context))),
                     ),
                     Tab(
                       child: AutoSizeText(StringClass.TAB_LABEL_PARKING,
                           maxLines: 1,
                           minFontSize: 5,
-                          style: TextStyle(color: Colors.black, fontSize: 12)),
+                          style: TextStyle(color: Colors.black, fontSize: getFont(12,context))),
                     ),
                   ],
                 )),
@@ -735,16 +849,21 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   }
 
   getTapImageView(String path) {
-    print("getTapImageView path : " + path);
+    print("getTapImageView path $path");
     if (path == null || path.isEmpty) {
       path =
           "https://firebasestorage.googleapis.com/v0/b/nodisable.appspot.com/o/ready.png?alt=media&token=6a6b0cee-e3a3-4354-9ba7-7cfd1d835145";
-      return Stack(
+      return Container(
+          child: Stack(
         children: [
           Container(
-            alignment: Alignment.center,
-            child: Image.network(path),
-          ),
+              alignment: Alignment.center,
+              child: FlatButton(
+                child: Image.network(path),
+                onPressed: () {
+                  showImage(path);
+                },
+              )),
           Container(
             alignment: Alignment.center,
             child: Text(
@@ -753,7 +872,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             ),
           )
         ],
-      );
+      ));
     } else {
       return Container(
         alignment: Alignment.center,
@@ -767,8 +886,17 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     }
   }
 
-  bottomView() {
+  bottomView(bool portrait) {
+    var width;
+    if (portrait) {
+      width = MediaQuery.of(context).size.width;
+    } else {
+      width = MediaQuery.of(context).size.width / 2;
+    }
+    print("bottomView width $width portrait $portrait");
     return Container(
+        width: width,
+        color: Colors.purple,
         alignment: Alignment.bottomCenter,
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
           FlatButton(
@@ -777,7 +905,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
               AutoSizeText(
                 StringClass.NAVI,
                 minFontSize: 6,
-                maxFontSize: getFont(4),
+                maxFontSize: getFont(10, context),
               ),
             ]),
             onPressed: () {
@@ -792,7 +920,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
               AutoSizeText(
                 StringClass.CALL,
                 minFontSize: 6,
-                maxFontSize: getFont(4),
+                maxFontSize: getFont(10, context),
               ),
             ]),
             onPressed: () {
@@ -806,12 +934,12 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
               AutoSizeText(
                 StringClass.CANCEL,
                 minFontSize: 6,
-                maxFontSize: getFont(4),
+                maxFontSize: getFont(10, context),
               ),
             ]),
             onPressed: () {
-              _controller
-                  .hideMarkerInfoWindow(MarkerId(_currentPlaceData.docu));
+              // _controller
+              //     .hideMarkerInfoWindow(MarkerId(_currentPlaceData.docu));
               stopNavi();
               hideDetail();
             },
@@ -826,8 +954,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     }
     NAVI_LIST = new List();
     setState(() {
-      MAP_HEIGHT = SIZE_HEIGHT;
-      _isShowingMap = true;
+      _isShowingMapOnly = true;
       _currentPlaceData = null;
     });
   }
@@ -879,15 +1006,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
         print(
             "getOverlay getCurrentLocation  ${_current_position.latitude} ${_current_position.longitude} to ${firstPosition.latitude} ${firstPosition.longitude} bearing $value");
 
-        CAMERA_POSITION_CENTER = CameraPosition(
-            target:
-                LatLng(_current_position.latitude, _current_position.longitude),
-            zoom: _zoom,
-            bearing: bearing);
-        _lastBearing = bearing;
-        _controller
-            .moveCamera(CameraUpdate.newCameraPosition(CAMERA_POSITION_CENTER));
-
+        moveCameraPositionSimply(
+            _current_position.latitude, _current_position.longitude, 18);
         setState(() {});
       });
     });
@@ -908,7 +1028,15 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                 items: dropDownMenuRadiusItemList,
                 onChanged: (value) {
                   _selectedCategoryRadius = value;
+                  print("DropdownButton LATLNG_LIST ${LATLNG_LIST.length}");
                   updateFilteredList();
+                  moveCameraPosition(
+                      _current_position.latitude,
+                      _current_position.longitude,
+                      0,
+                      true,
+                      _selectedCategoryRadius);
+                  setState(() {});
                 }),
             DropdownButton(
                 value: _selectedCategory1,
@@ -943,7 +1071,9 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   FlutterTtsImproved _flutterTts = FlutterTtsImproved();
 
   HashMap<int, String> ttsHashMap = new HashMap();
+  HashMap<String, String> ttsHashMap2 = new HashMap();
   TtsState ttsState = TtsState.stopped;
+  bool isPassedFirstPos = false;
 
   void checkDistance() async {
     print("checkDistance");
@@ -959,12 +1089,6 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
 
       double distance = Geolocator.distanceBetween(
           _current_position.latitude, _current_position.longitude, lat, lon);
-      print(
-          "checkDistance top index ${navStackTop.index} distance $distance , $lat , $lon");
-      print(
-          "checkDistance type ${navStackTop.type} turn type ${navStackTop.turnType}${navStackTop.description}");
-      print(
-          "checkDistance ttshash contains index ${navStackTop.index} ${ttsHashMap.containsKey(navStackTop.index)} ");
 
       var ttsForNext = "다음 안내까지 ${distance.toInt()}m";
       showToast(ttsForNext);
@@ -974,6 +1098,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             ttsState = TtsState.playing;
           }
         });
+        sleep(Duration(seconds: 3));
       }
       if (navStackTop.turnType != null && navStackTop.turnType == 201) {
         if (distance < 30) {
@@ -988,7 +1113,13 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
           stopNavi();
         }
       } else {
-        if (distance < 20) {
+        print("isPassedFirstPos $isPassedFirstPos");
+        int limit = 20;
+        if (!isPassedFirstPos) {
+          limit = 7;
+        }
+        if (distance < limit) {
+          isPassedFirstPos = true;
           if (!ttsHashMap.containsKey(navStackTop.index)) {
             if (navStackTop.turnType != null) {
               // text = getTurnTypeText(navStackTop.turnType) + text;
@@ -998,11 +1129,13 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                   text.isNotEmpty &&
                   ttsState != TtsState.playing) {
                 print("checkDistance play tts $text");
+                showToast(text);
                 var ttsRes = await _flutterTts.speak(text);
                 if (ttsRes == 1) {
                   ttsState = TtsState.playing;
                   ttsHashMap[navStackTop.index] = text;
                 }
+                sleep(Duration(seconds: 3));
               }
             }
           }
@@ -1011,7 +1144,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
         } else {
           var bearing = Geolocator.bearingBetween(_current_position.latitude,
               _current_position.longitude, lat, lon);
-          moveCameraPosition(bearing);
+          moveCameraPosition(_current_position.latitude,
+              _current_position.longitude, bearing, false);
           break;
         }
       }
@@ -1027,9 +1161,12 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     _isNaviStarted = false;
     ttsHash.clear();
     ttsHashMap.clear();
+    ttsHashMap2.clear();
+    isPassedFirstPos = false;
     fake_index = 0;
-    moveCameraPosition(0);
-    MAP_HEIGHT = SIZE_HEIGHT * 0.65;
+    moveCameraPositionSimply(
+        _current_position.latitude, _current_position.longitude);
+    // MAP_HEIGHT = SIZE_HEIGHT * 0.65;
   }
 
   void showTtsSelectDialog() async {
@@ -1049,10 +1186,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     print(
         "distance : $distance , limit max : $NAVI_LIMIT_DISTANCE_MAX , min : $NAVI_LIMIT_DISTANCE_MIN");
     if (NAVI_LIMIT_DISTANCE_MIN <= distance) {
-      //TODO
-      // if (0 < sdk && sdk < 27) {
       if (sdk < 0) {
-        MAP_HEIGHT = SIZE_HEIGHT - NAVI_DETAIL_BOTTOM_HEIGHT;
+        // MAP_HEIGHT = SIZE_HEIGHT - NAVI_DETAIL_BOTTOM_HEIGHT;
         _progressDialog.show();
         showToast("본 기기는 음성안내를 지원하지 않습니다.");
         _isUsingTTS = false;
@@ -1072,7 +1207,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                             .pop('dialog');
                         _progressDialog.show();
                         setState(() {
-                          MAP_HEIGHT = SIZE_HEIGHT - NAVI_DETAIL_BOTTOM_HEIGHT;
+                          // MAP_HEIGHT = SIZE_HEIGHT - NAVI_DETAIL_BOTTOM_HEIGHT;
                           print("MAP_HEIGHT $MAP_HEIGHT");
                           getOverlay(true);
                         });
@@ -1086,7 +1221,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                             .pop('dialog');
                         _progressDialog.show();
                         setState(() {
-                          MAP_HEIGHT = SIZE_HEIGHT - NAVI_DETAIL_BOTTOM_HEIGHT;
+                          // MAP_HEIGHT = SIZE_HEIGHT - NAVI_DETAIL_BOTTOM_HEIGHT;
                           print("MAP_HEIGHT $MAP_HEIGHT");
                           getOverlay(true);
                         });
@@ -1116,19 +1251,19 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     double radius = 0;
     switch (_selectedCategoryRadius) {
       case 0:
-        radius = 0;
+        radius = 100;
         break;
       case 1:
-        radius = 1000;
+        radius = 200;
         break;
       case 2:
-        radius = 3000;
+        radius = 300;
         break;
       case 3:
-        radius = 5000;
+        radius = 400;
         break;
       case 4:
-        radius = 10000;
+        radius = 500;
         break;
     }
     return radius;
@@ -1142,6 +1277,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       PlaceData d = tempList[i];
       double distance = Geolocator.distanceBetween(_current_position.latitude,
           _current_position.longitude, d.latitude, d.longitude);
+      _distanceHash.putIfAbsent(d.docu, () => distance);
       if (getRadiusInt() == 0) {
         continue;
       }
@@ -1155,16 +1291,79 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     setState(() {});
   }
 
-  void updateFilteredList() {
-    print("updateFilteredList PLACE_LIST ${PLACE_LIST.length}");
+  void updateFilteredList([bool init = false]) {
+    print("updateFilteredList init $init LATLNG_LIST ${LATLNG_LIST.length}");
+    makeList();
+    if (!init) {
+      setState(() {});
+    } else {
+      if (_current_position == null) {
+        _isSetMapCenter = false;
+        return;
+      }
+      for (int i = 0; i < 5; i++) {
+        makeList();
+        if (LATLNG_LIST.length > 0) {
+          moveCameraPosition(_current_position.latitude,
+              _current_position.longitude, 0, true, i);
+          break;
+        }
+        _selectedCategoryRadius++;
+      }
+
+      print(
+          "updateFilteredList _selectedCategoryRadius $_selectedCategoryRadius");
+      if (_selectedCategoryRadius == 5) {
+        _selectedCategoryRadius = 0;
+        if (_controller != null) {
+          CAMERA_POSITION_CENTER = CameraPosition(
+              target: LatLng(
+                  _current_position.latitude, _current_position.longitude),
+              zoom: _zoom);
+          _controller.moveCamera(
+              CameraUpdate.toCameraPosition(CAMERA_POSITION_CENTER));
+        }
+      }
+      _isSetMapCenter = true;
+      setState(() {});
+    }
+  }
+
+  createCircle() {
+    print("createCircle _selectedCategoryRadius $_selectedCategoryRadius");
+    List<CircleOverlay> circles = List<CircleOverlay>();
+    if (_current_position != null) {
+      circles = List.from([
+        CircleOverlay(
+          overlayId: "current",
+          color: Colors.cyan,
+          outlineColor: Colors.indigo,
+          outlineWidth: 1,
+          center:
+              LatLng(_current_position.latitude, _current_position.longitude),
+          radius: getRadiusInt(),
+          onTap: (overlayId) {
+            hideDetail();
+          },
+        )
+      ]);
+    }
+    return circles;
+  }
+
+  void makeList() {
+    print("makeList");
     FILTERED_LIST.clear();
+    LATLNG_LIST.clear();
     if (_current_position == null) {
+      print("updateFilteredList current position is null");
       return;
     }
     for (int i = 0; i < PLACE_LIST.length; i++) {
       PlaceData data = PLACE_LIST[i];
       double distance = Geolocator.distanceBetween(_current_position.latitude,
           _current_position.longitude, data.latitude, data.longitude);
+      _distanceHash.putIfAbsent(data.docu, () => distance);
       if (getRadiusInt() > 0 && distance > getRadiusInt()) {
         continue;
       }
@@ -1176,32 +1375,15 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       String selected2 = subDropDownStringList[_selectedCategory2];
       if (selected1.contains(category1) && category2 == selected2) {
         FILTERED_LIST.add(data);
+        LATLNG_LIST.add(LatLng(data.latitude, data.longitude));
       } else if (selected1.contains(category1) &&
           selected2 == StringClass.ALL) {
         FILTERED_LIST.add(data);
+        LATLNG_LIST.add(LatLng(data.latitude, data.longitude));
       } else if (category1 == StringClass.ALL) {
         FILTERED_LIST.add(data);
+        LATLNG_LIST.add(LatLng(data.latitude, data.longitude));
       }
     }
-    print("updateFilteredList FILTERED_LIST ${FILTERED_LIST.length}");
-    setState(() {});
-  }
-
-  createCircle() {
-    print("createCircle _selectedCategoryRadius $_selectedCategoryRadius");
-    Set<Circle> circles = Set<Circle>();
-    if (_selectedCategoryRadius != 0 && _current_position != null) {
-      circles = Set.from([
-        Circle(
-            circleId: CircleId("current"),
-            strokeWidth: 1,
-            fillColor: Colors.blue.withOpacity(0.5),
-            strokeColor: Colors.blue,
-            center:
-                LatLng(_current_position.latitude, _current_position.longitude),
-            radius: getRadiusInt())
-      ]);
-    }
-    return circles;
   }
 }

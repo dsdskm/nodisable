@@ -117,7 +117,6 @@ List<Position> FAKE_POST_LIST2 = [
   getPos(37.5615607467828, 127.0339302067024),
   getPos(37.56153518831519, 127.03396434564951),
   getPos(37.56151263671883, 127.03398900155575),
-
 ];
 
 getPos(double d, double e) {
@@ -125,20 +124,27 @@ getPos(double d, double e) {
 }
 
 int fake_index = 0;
-resetFakePosition(){
+
+resetFakePosition() {
   fake_index = 0;
 }
-
 
 getFakePosition() {
   if (fake_index < FAKE_POST_LIST2.length - 1) {
     fake_index++;
   }
-  print("getFakePosition fake_index $fake_index , ${FAKE_POST_LIST2[fake_index]}");
+  print(
+      "getFakePosition fake_index $fake_index , ${FAKE_POST_LIST2[fake_index]}");
   return FAKE_POST_LIST2[fake_index];
 }
 
-getFont(int value){
-  // print("getFont ${RATIO * value}");
-  return ((RATIO * value).toInt()+2).toDouble();
+getFont(int value, BuildContext context) {
+  var fontSize = MediaQuery.of(context).textScaleFactor;
+  double ret = value.toDouble();
+
+  if (fontSize <= 1) {
+    ret = ret * 2;
+  }
+  print("getFont value $value fontSize $fontSize ret $ret");
+  return ret;
 }

@@ -16,23 +16,23 @@ import 'package:seongdonggu/common/util.dart';
 import 'package:seongdonggu/data/database.dart';
 import 'package:seongdonggu/data/dto/categoryData.dart';
 import 'package:seongdonggu/data/dto/placeData.dart';
-import 'package:seongdonggu/googleView.dart';
+import 'package:seongdonggu/mapView.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Screen.keepOn(true);
   DATABASE = await $FloorMyDatabase.databaseBuilder('my_database.db').build();
   runApp(MyApp());
-  if (Platform.isAndroid) {
-    if (DEBUG) {
-      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);
-      test();
-    } else {
-      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    }
-  } else {
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  }
+  // if (Platform.isAndroid) {
+  //   if (DEBUG) {
+  //     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);
+  //     test();
+  //   } else {
+  //     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  //   }
+  // } else {
+  //   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  // }
   stderr.writeln('App start');
   developer.log('log me', name: 'App start');
 }
@@ -118,7 +118,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                         AutoSizeText(
                           StringClass.LABEL,
-                          style: TextStyle(fontSize: 40),
+                          style: TextStyle(fontSize: getFont(40, context)),
+                          
                           maxLines: 1,
                         ),
                       ],

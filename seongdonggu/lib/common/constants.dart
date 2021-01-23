@@ -35,11 +35,12 @@ final FIELD_TIME = "time";
 final FIELD_TEXT = "text";
 final FIELD_CONTENT = "content";
 
-var CURRENT_LOCATION_CHECK_DELAY = 3;
+var CURRENT_LOCATION_CHECK_DELAY = 15;
 final NAVI_LIST_DISTANCE = 10;
 final NAVI_LIMIT_DISTANCE_MAX = 1000;
 final NAVI_LIMIT_DISTANCE_MIN = 50;
 final RELEASE = "release_1.0";
 final NAVI_DETAIL_BOTTOM_HEIGHT = 100.0;
-
+final NAVI_DETAIL_RIGHT_WIDTH = 180.0;
+final RADIUS = ["100m", "200m", "300m", "400m", "500m"];
 enum TtsState { playing, stopped }
