@@ -96,6 +96,8 @@ flutter:
     - asset/images/cancel.png
     - asset/images/comment.png
     - asset/images/navi.png
+    - asset/images/search.jpg
+    - asset/images/reset.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

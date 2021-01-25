@@ -8,6 +8,8 @@ class StringClass{
   static String NAVI="길찾기";
   static String NAVI_LOADING="길찾는중";
   static String CANCEL="취소";
+  static String SEARCH="검색";
+  static String RESET="초기화";
   static String REVIEW="의견 보내기";
   static String NOTICE="공지사항";
   static String OSS="오픈소스";
@@ -42,5 +44,9 @@ class StringClass{
   static String READY = "준비중입니다";
   static String DIALOG_TITLE_EXIT = "종료";
   static String DIALOG_MESSAGE_EXIT = "앱을 종료하시겠습니까?";
+  static String DIALOG_TITLE_SEARCH = "주소 검색";
+  static String DIALOG_MESSAGE_SEARCH = "주소를 입력해주세요.";
+  static String JIBUN_ADDRESS = "지번 주소";
+  static String ROAD_ADDRESS = "도로명 주소";
 
 }

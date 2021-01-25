@@ -23,6 +23,7 @@ void main() async {
   Screen.keepOn(true);
   DATABASE = await $FloorMyDatabase.databaseBuilder('my_database.db').build();
   runApp(MyApp());
+  // SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);
   // if (Platform.isAndroid) {
   //   if (DEBUG) {
   //     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);

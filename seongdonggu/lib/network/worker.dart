@@ -5,6 +5,7 @@ import 'package:http/http.dart';
 import 'package:naver_map_plugin/naver_map_plugin.dart';
 import 'package:seongdonggu/common/cahced.dart';
 import 'package:seongdonggu/data/dto/naviData.dart';
+import 'package:seongdonggu/data/dto/searchResultData.dart';
 
 final GOOGLE_API_KEY = "AIzaSyC6F789FbCBc50kX1V1hdOaxFUufECWErg";
 var DIRECTION_URL = "https://maps.googleapis.com/maps/api/directions/json?";
@@ -65,3 +66,35 @@ Future<List<PathOverlay>> requestDirection(var start_lat, var start_lon,
   ret.add(po);
   return ret;
 }
+
+Future getSearchResult(String query,double lat,double lon) async {
+  String url = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=$query&coordinate=$lon,$lat";
+  print("getSearchResult url $url");
+  final response = await get(url,
+  headers: {
+    "X-NCP-APIGW-API-KEY-ID":"quld7x8r88",
+    "X-NCP-APIGW-API-KEY":"nPoZMaMl5jUrER2NRzsGP0GiD5t7Ann4IC9mfFPT"
+  });
+  final responseJson = json.decode(response.body);
+  print("getSearchResult $responseJson");
+  List<SearchResultData> list = List();
+  var meta = responseJson['meta'];
+  var totalCount = meta['totalCount'];
+  var address = responseJson["addresses"];
+  print("getSearchResult totalCount $totalCount address $address");
+  for (int i = 0; i < totalCount; i++) {
+    if(i==5){
+      break;
+    }
+    print(address[i]);
+    var address1 = address[i]["roadAddress"];
+    var address2 = address[i]["jibunAddress"];
+    double latitude = double.parse(address[i]["y"]);
+    double longitude = double.parse(address[i]["x"]);
+    double distance = address[i]["distance"];
+    list.add(
+        SearchResultData(address1, address2, latitude, longitude, distance));
+  }
+  return list;
+}
+

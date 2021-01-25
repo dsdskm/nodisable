@@ -145,6 +145,10 @@ getFont(int value, BuildContext context) {
   if (fontSize <= 1) {
     ret = ret * 2;
   }
-  print("getFont value $value fontSize $fontSize ret $ret");
+
+  if(RATIO>=3){
+    ret = ret / 2;
+  }
+  print("getFont value $value fontSize $fontSize ret $ret RATIO $RATIO");
   return ret;
 }
