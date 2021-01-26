@@ -64,6 +64,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   List<PathOverlay> _polyLineList = List<PathOverlay>();
   static double _zoom = 14;
   static double _zoom_init = 12;
+  static double MAX_ZOOM = 18;
   bool _isNaviStarted = false;
   String _currentTtsDescription = "";
   bool _isUsingTTS = false;
@@ -78,8 +79,6 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   bool _isInitDrop = false;
 
   List<SearchResultData> SEARCH_RESULT_LIST = List();
-
-  // test
   var geolocator = Geolocator();
   var locationOptions = LocationOptions(
       accuracy: LocationAccuracy.high,
@@ -89,6 +88,17 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
 
   Map<String, double> _distanceHash = new HashMap();
   List<LatLng> LATLNG_LIST = new List();
+
+  List<DropdownMenuItem> dropDownMenuRadiusItemList = new List();
+
+  List<DropdownMenuItem> dropDownMenuItemList = new List();
+  List<String> dropDownList = new List();
+  Set<String> dropDownMenuItemSet = new Set();
+
+  HashMap<String, List<DropdownMenuItem>> dropDownHash = new HashMap();
+  HashMap<String, List<String>> dropDownStringHash = new HashMap();
+
+  ProgressDialog _progressDialog;
 
   void trackGeoLocation() async {
     print("trackGeoLocation");
@@ -147,8 +157,6 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     super.initState();
     print("initState");
     Screen.keepOn(true);
-    // WidgetsBinding.instance.removeObserver(this);
-    // WidgetsBinding.instance.addObserver(this);
     startLocationMonitoring();
 
     _flutterTts.setStartHandler(() {
@@ -175,24 +183,20 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
       print("didChangeAppLifecycleState paused");
-      // _timer.cancel();
-      // stopNavi();
     }
     if (state == AppLifecycleState.resumed) {
       print("didChangeAppLifecycleState resumed");
-      // Navigator.popAndPushNamed(context, MainView.route);
-      // startLocationMonitoring();
     }
   }
 
   moveCameraPositionSimply(double lat, double lon, [double zoom]) {
+    print("moveCameraPositionSimply zoom $zoom");
     if (zoom != null) {
       CAMERA_POSITION_CENTER =
           CameraPosition(target: LatLng(lat, lon), zoom: zoom);
     } else {
       CAMERA_POSITION_CENTER = CameraPosition(target: LatLng(lat, lon));
     }
-
     if (_controller != null) {
       _controller
           .moveCamera(CameraUpdate.toCameraPosition(CAMERA_POSITION_CENTER));
@@ -201,7 +205,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
 
   moveCameraPosition(double lat, double lon, double bearing, bool fit,
       [int gap]) {
-    double zoom = _zoom;
+    double zoom = MAX_ZOOM;
     if (fit && gap != null) {
       switch (gap) {
         case 0:
@@ -219,8 +223,11 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
         case 4:
           zoom = 14;
           break;
+        default:
+          zoom = MAX_ZOOM;
       }
     }
+
     print(
         "moveCameraPosition zoom $zoom gap $gap bearing $bearing fit $fit LATLNG_LIST ${LATLNG_LIST.length}");
     CAMERA_POSITION_CENTER =
@@ -229,11 +236,6 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     if (_controller != null) {
       _controller
           .moveCamera(CameraUpdate.toCameraPosition(CAMERA_POSITION_CENTER));
-      // if (fit && LATLNG_LIST.length >= 2) {
-      //   _controller.moveCamera(CameraUpdate.fitBounds(
-      //       LatLngBounds.fromLatLngList(LATLNG_LIST),
-      //       padding: 200));
-      // }
     }
   }
 
@@ -379,10 +381,12 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
 
     for (int i = 0; i < SEARCH_RESULT_LIST.length; i++) {
       SearchResultData data = SEARCH_RESULT_LIST[i];
+      double distance = Geolocator.distanceBetween(_current_position.latitude,
+          _current_position.longitude, data.latitude, data.longitude);
       Marker m = Marker(
           markerId: "search$i",
           position: LatLng(data.latitude, data.longitude),
-          infoWindow: data.address,
+          infoWindow: "${data.address}~${distance.toInt()}m",
           iconTintColor: Color.fromARGB(255, 0, 255, 0),
           onMarkerTab: (marker, iconSize) {
             showSearchResultView(data);
@@ -391,17 +395,6 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     }
     return markers;
   }
-
-  List<DropdownMenuItem> dropDownMenuRadiusItemList = new List();
-
-  List<DropdownMenuItem> dropDownMenuItemList = new List();
-  List<String> dropDownList = new List();
-  Set<String> dropDownMenuItemSet = new Set();
-
-  HashMap<String, List<DropdownMenuItem>> dropDownHash = new HashMap();
-  HashMap<String, List<String>> dropDownStringHash = new HashMap();
-
-  ProgressDialog _progressDialog;
 
   @override
   Widget build(BuildContext context) {
@@ -569,21 +562,18 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
 
     setState(() {
       _isShowingMapOnly = false;
-      moveCameraPositionSimply(data.latitude, data.longitude);
+      moveCameraPositionSimply(data.latitude, data.longitude, MAX_ZOOM);
     });
   }
 
   void showDetailView(PlaceData data) {
+    print("showDetailView");
     _searchResultData = null;
     _currentPlaceData = data;
-    print("showDetailView");
-    CAMERA_POSITION_CENTER = CameraPosition(
-      target: LatLng(_currentPlaceData.latitude, _currentPlaceData.longitude),
-    );
     setState(() {
       _isShowingMapOnly = false;
       moveCameraPositionSimply(
-          _currentPlaceData.latitude, _currentPlaceData.longitude);
+          _currentPlaceData.latitude, _currentPlaceData.longitude, MAX_ZOOM);
     });
   }
 
@@ -618,20 +608,6 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
               textAlign: TextAlign.center,
             ),
             Padding(padding: EdgeInsets.only(top: 5)),
-            AutoSizeText(
-              StringClass.JIBUN_ADDRESS,
-              style: TextStyle(fontSize: getFont(10, context)),
-              maxLines: 1,
-              textAlign: TextAlign.center,
-            ),
-            AutoSizeText(
-              _searchResultData.address2,
-              overflow: TextOverflow.visible,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: getFont(11, context)),
-              maxLines: 2,
-              textAlign: TextAlign.center,
-            ),
           ],
         ));
   }
@@ -647,21 +623,21 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     return Container(
         margin: EdgeInsets.only(top: 0),
         padding: EdgeInsets.only(top: 0),
-        alignment: Alignment.topCenter,
+        alignment: Alignment.center,
         width: width,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AutoSizeText(
               "[${_currentPlaceData.category2}]${_currentPlaceData.name}",
-              style: TextStyle(fontSize: getFont(10, context)),
+              style: TextStyle(fontSize: getFont(9, context)),
               maxLines: 1,
               textAlign: TextAlign.center,
             ),
             _currentPlaceData.summary.length > 0
                 ? AutoSizeText(
                     _currentPlaceData.summary,
-                    style: TextStyle(fontSize: getFont(10, context)),
+                    style: TextStyle(fontSize: getFont(8, context)),
                     maxLines: 1,
                     textAlign: TextAlign.center,
                   )
@@ -691,7 +667,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                       children: [
                         Expanded(child: titleView(true), flex: 2),
                         Expanded(child: tabView(true), flex: 3),
-                        Expanded(child: bottomView(true), flex: 1),
+                        Expanded(child: bottomView(true), flex: 2),
                       ],
                     )));
           }
@@ -721,22 +697,26 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       });
     } else if (_searchResultData != null) {
       return OrientationBuilder(builder: (_, orientation) {
-        String title =
-            _searchResultData.address + "\n" + _searchResultData.address2;
+        var height;
+        String title = _searchResultData.address;
         if (orientation == Orientation.portrait) {
           if (_isNaviStarted) {
             return Align(
                 alignment: Alignment.bottomCenter,
                 child: Wrap(children: [naviDetailContentView(title, true)]));
           } else {
+            height = MediaQuery.of(context).size.height - MAP_HEIGHT;
             return Align(
                 alignment: Alignment.bottomCenter,
-                child: Wrap(
-                  children: [
-                    searchTitleView(true),
-                    searchBottomView(true),
-                  ],
-                ));
+                child: Container(
+                    alignment: Alignment.center,
+                    height: height,
+                    child: Wrap(
+                      children: [
+                        searchTitleView(true),
+                        searchBottomView(true),
+                      ],
+                    )));
           }
         } else {
           if (_isNaviStarted) {
@@ -772,7 +752,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     var height;
     if (portrait) {
       width = MediaQuery.of(context).size.width;
-      height = NAVI_DETAIL_BOTTOM_HEIGHT;
+      height = MediaQuery.of(context).size.height - MAP_HEIGHT;
       return Container(
         width: width,
         height: height,
@@ -781,18 +761,22 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
         alignment: Alignment.bottomCenter,
         child: Column(
           children: <Widget>[
-            AutoSizeText(
-              title,
-              style: TextStyle(fontSize: getFont(10, context)),
-              maxLines: 1,
-            ),
+            Container(
+                padding: EdgeInsets.only(left: 2, right: 2),
+                alignment: Alignment.center,
+                child: AutoSizeText(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: getFont(10, context)),
+                  maxLines: 2,
+                )),
             _currentTtsDescription.length > 0
                 ? AutoSizeText(_currentTtsDescription,
                     style: TextStyle(fontSize: getFont(10, context)),
                     maxLines: 1)
                 : Container(),
             Container(
-                margin: EdgeInsets.only(top: 10),
+                margin: EdgeInsets.only(top: 5),
                 width: SIZE_WIDTH,
                 child: Row(
                   mainAxisSize: MainAxisSize.max,
@@ -853,11 +837,15 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            AutoSizeText(
-              summaryTitle,
-              style: TextStyle(fontSize: getFont(10, context)),
-              maxLines: 2,
-            ),
+            Container(
+                padding: EdgeInsets.only(left: 2, right: 2),
+                alignment: Alignment.center,
+                child: AutoSizeText(
+                  summaryTitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: getFont(10, context)),
+                  maxLines: 3,
+                )),
             _currentTtsDescription.length > 0
                 ? AutoSizeText(_currentTtsDescription,
                     style: TextStyle(fontSize: getFont(10, context)),
@@ -870,12 +858,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                 style: TextStyle(fontSize: getFont(10, context)),
               ),
               onPressed: () {
-                _progressDialog.show();
-                isPassedFirstPos = false;
-                getOverlay(true);
-                if (_isUsingTTS) {
-                  _flutterTts.speak(StringClass.TTS_RESTARTED);
-                }
+                naviRestart();
               },
             )),
             Container(
@@ -899,6 +882,16 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
           ],
         ),
       );
+    }
+  }
+
+  naviRestart() {
+    print("naviRestart");
+    _progressDialog.show();
+    isPassedFirstPos = false;
+    getOverlay(true);
+    if (_isUsingTTS) {
+      _flutterTts.speak(StringClass.TTS_RESTARTED);
     }
   }
 
@@ -1068,8 +1061,6 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
               ),
             ]),
             onPressed: () {
-              // _controller
-              //     .hideMarkerInfoWindow(MarkerId(_currentPlaceData.docu));
               stopNavi();
               hideDetail();
             },
@@ -1129,8 +1120,6 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
               ),
             ]),
             onPressed: () {
-              // _controller
-              //     .hideMarkerInfoWindow(MarkerId(_currentPlaceData.docu));
               stopNavi();
               hideDetail();
             },
@@ -1166,6 +1155,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                               _current_position.longitude)
                           .then((value) {
                         SEARCH_RESULT_LIST = value;
+                        showToast(
+                            "총 ${SEARCH_RESULT_LIST.length} 개의 검색 결과가 있습니다.");
                         Navigator.of(context, rootNavigator: true)
                             .pop('dialog');
                         setState(() {});
@@ -1244,8 +1235,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
         print(
             "getOverlay getCurrentLocation  ${_current_position.latitude} ${_current_position.longitude} to ${firstPosition.latitude} ${firstPosition.longitude} bearing $value");
 
-        moveCameraPositionSimply(
-            _current_position.latitude, _current_position.longitude, 18);
+        moveCameraPosition(_current_position.latitude,
+            _current_position.longitude, bearing, true, 99);
         setState(() {});
       });
     });
@@ -1327,7 +1318,10 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
 
       double distance = Geolocator.distanceBetween(
           _current_position.latitude, _current_position.longitude, lat, lon);
-
+      if (distance > 100) {
+        naviRestart();
+        return;
+      }
       var ttsForNext = "다음 안내까지 ${distance.toInt()}m";
       showToast(ttsForNext);
       if (_isUsingTTS) {
@@ -1383,7 +1377,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
           var bearing = Geolocator.bearingBetween(_current_position.latitude,
               _current_position.longitude, lat, lon);
           moveCameraPosition(_current_position.latitude,
-              _current_position.longitude, bearing, false);
+              _current_position.longitude, bearing, false, 99);
           break;
         }
       }
@@ -1638,7 +1632,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             mainAxisSize: MainAxisSize.min,
             children: [
               FlatButton(
-                minWidth: 50,
+                  minWidth: 50,
                   onPressed: () {
                     SEARCH_RESULT_LIST.clear();
                     hideDetail();

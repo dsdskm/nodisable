@@ -38,18 +38,18 @@ class NoticeViewState extends State<NoticeViewWidget> {
             child: Container(
           child: StreamBuilder<QuerySnapshot>(
             stream:
-                Firestore.instance.collection(COLLECTION_NOTICE).orderBy(FIELD_TIME,descending: true).snapshots(),
+            FirebaseFirestore.instance.collection(COLLECTION_NOTICE).orderBy(FIELD_TIME,descending: true).snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 List<NoticeData> list = new List();
                 DATABASE.noticeDao.deleteAll();
-                for (int i = 0; i < snapshot.data.documents.length; i++) {
-                  DocumentSnapshot ds = snapshot.data.documents[i];
+                for (int i = 0; i < snapshot.data.docs.length; i++) {
+                  DocumentSnapshot ds = snapshot.data.docs[i];
                   String title = ds[FIELD_TITLE];
                   String content = ds[FIELD_CONTENT];
                   String image = ds[FIELD_IMAGE];
                   NoticeData data =
-                      new NoticeData(ds.documentID, title, content, image);
+                      new NoticeData(ds.id, title, content, image);
                   print("data $data");
                   list.add(data);
                 }

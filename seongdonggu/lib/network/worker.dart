@@ -83,7 +83,7 @@ Future getSearchResult(String query,double lat,double lon) async {
   var address = responseJson["addresses"];
   print("getSearchResult totalCount $totalCount address $address");
   for (int i = 0; i < totalCount; i++) {
-    if(i==5){
+    if(i==10){
       break;
     }
     print(address[i]);

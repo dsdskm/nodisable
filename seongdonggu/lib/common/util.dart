@@ -3,13 +3,12 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:connectivity/connectivity.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:launch_review/launch_review.dart';
 import 'package:package_info/package_info.dart';
-import 'package:path/path.dart';
 import 'package:seongdonggu/common/constants.dart';
 import 'package:seongdonggu/common/stringConstant.dart';
 
@@ -43,13 +42,13 @@ String nullImageCheck(String text, String image_base) {
 // }
 
 appVersionCheck(BuildContext context) {
-  Firestore.instance
+  FirebaseFirestore.instance
       .collection(COLLECTION_VERSION)
-      .document(RELEASE)
+      .doc(RELEASE)
       .get()
       .then((DocumentSnapshot ds) async {
-    int android = ds.data["android"];
-    int ios = ds.data["ios"];
+    int android = ds["android"];
+    int ios = ds["ios"];
     print("android $android ios $ios");
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     String appName = packageInfo.appName;

@@ -116,10 +116,10 @@ class CommentViewState extends State<CommentViewWidget> {
   void sendComment() {
     print("sendComment");
     var docu = DateTime.now().millisecondsSinceEpoch.toString();
-    Firestore.instance
+    FirebaseFirestore.instance
         .collection(COLLECTION_COMMENT)
-        .document(docu)
-        .setData({FIELD_TEXT: _textController.text, FIELD_TIME: docu});
+        .doc(docu)
+        .set({FIELD_TEXT: _textController.text, FIELD_TIME: docu});
   }
 
   @override

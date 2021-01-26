@@ -145,10 +145,11 @@ getFont(int value, BuildContext context) {
   if (fontSize <= 1) {
     ret = ret * 2;
   }
-
-  if(RATIO>=3){
+  if (RATIO == 3 && fontSize > 1.5) {
+    ret = ret / 1.5;
+  } else if (RATIO > 3 && fontSize > 1.5) {
     ret = ret / 2;
   }
   print("getFont value $value fontSize $fontSize ret $ret RATIO $RATIO");
-  return ret;
+  return ret.toInt().toDouble();
 }

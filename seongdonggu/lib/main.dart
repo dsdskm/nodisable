@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -11,7 +12,6 @@ import 'package:screen/screen.dart';
 import 'package:seongdonggu/common/constants.dart';
 import 'package:seongdonggu/common/stringConstant.dart';
 import 'package:seongdonggu/common/cahced.dart';
-import 'package:seongdonggu/common/test.dart';
 import 'package:seongdonggu/common/util.dart';
 import 'package:seongdonggu/data/database.dart';
 import 'package:seongdonggu/data/dto/categoryData.dart';
@@ -23,27 +23,13 @@ void main() async {
   Screen.keepOn(true);
   DATABASE = await $FloorMyDatabase.databaseBuilder('my_database.db').build();
   runApp(MyApp());
-  // SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);
-  // if (Platform.isAndroid) {
-  //   if (DEBUG) {
-  //     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitDown]);
-  //     test();
-  //   } else {
-  //     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  //   }
-  // } else {
-  //   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  // }
-  stderr.writeln('App start');
-  developer.log('log me', name: 'App start');
+  Firebase.initializeApp();
 }
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    // setSize(MediaQuery.of(context));
-    //checkNetworkConnection(context);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: StringClass.LABEL,
@@ -114,13 +100,12 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [
                         Image.asset(
                           "asset/images/logo.png",
-                          width: 300,
-                          height: 300,
+                          width: MediaQuery.of(context).size.width / 1.5,
+                          height: MediaQuery.of(context).size.width / 1.5,
                         ),
                         AutoSizeText(
                           StringClass.LABEL,
                           style: TextStyle(fontSize: getFont(40, context)),
-                          
                           maxLines: 1,
                         ),
                       ],
@@ -129,15 +114,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
   syncCategory() {
     print("syncCategory");
-    Firestore.instance
+    FirebaseFirestore.instance
         .collection(COLLECTION_CATEGORY)
         .snapshots()
         .listen((event) {
       List<CategoryData> list = new List();
       List<CategoryData> depth1_list = new List();
       DATABASE.categoryDao.deleteAll();
-      for (int i = 0; i < event.documents.length; i++) {
-        DocumentSnapshot ds = event.documents[i];
+      for (int i = 0; i < event.docs.length; i++) {
+        DocumentSnapshot ds = event.docs[i];
         List<dynamic> menu = ds[FIELD_MENU_CATEGORY];
         for (int i = 0; i < menu.length; i++) {
           String category = menu[i];
@@ -157,21 +142,21 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       DATABASE.categoryDao.insertAll(list);
       CATEGORY_LIST = list;
-      // Navigator.popAndPushNamed(context, MapView.route);
       Navigator.popAndPushNamed(context, MainView.route);
     });
   }
 
   syncData() {
     print("syncData");
-    Firestore.instance
+    FirebaseFirestore.instance
         .collection(COLLECTION_LOCATION)
         .snapshots()
         .listen((event) {
       List<PlaceData> list = new List();
       DATABASE.placeDao.deleteAll();
-      for (int i = 0; i < event.documents.length; i++) {
-        DocumentSnapshot ds = event.documents[i];
+      for (int i = 0; i < event.docs.length; i++) {
+        Map<String, dynamic> ds = event.docs[i].data();
+        String id = event.docs[i].id;
         String address = nullCheck(ds[FIELD_ADDRESS]);
         String category1 = nullCheck(ds[FIELD_CATEGORY1]);
         String category2 = nullCheck(ds[FIELD_CATEGORY2]);
@@ -204,7 +189,7 @@ class _MyHomePageState extends State<MyHomePage> {
               nullImageCheck(image[FIELD_IMAGE_RESTROOM], image_base);
         }
         PlaceData pd = PlaceData(
-            ds.documentID,
+            id,
             address,
             category1,
             category2,
