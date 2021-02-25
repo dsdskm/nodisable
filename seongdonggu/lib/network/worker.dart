@@ -59,7 +59,7 @@ Future<List<PathOverlay>> requestDirection(var start_lat, var start_lon,
       latlngList.add(latlng);
     }
   }
-  PathOverlay po = PathOverlay(PathOverlayId("1"), latlngList);
+  PathOverlay po = PathOverlay(PathOverlayId("1"), latlngList,color: Colors.red);
   NAVI_LIST = list;
   print("requestDirection latlngList $latlngList");
   List<PathOverlay> ret = List<PathOverlay>();

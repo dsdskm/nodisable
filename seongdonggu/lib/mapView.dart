@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:device_info/device_info.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -63,7 +64,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   Timer _timer;
   List<PathOverlay> _polyLineList = List<PathOverlay>();
   static double _zoom = 14;
-  static double _zoom_init = 12;
+  static double _zoom_init = 13;
   static double MAX_ZOOM = 18;
   bool _isNaviStarted = false;
   String _currentTtsDescription = "";
@@ -71,10 +72,9 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
 
   NaverMapController _controller;
   CameraPosition CAMERA_POSITION_CENTER = CameraPosition(
-    target: LatLng(37.520841, 126.983231),
+    target: LatLng(37.561171, 127.035712),
     zoom: _zoom_init,
   );
-  bool _isSetMapCenter = false;
   MyStack.Stack<NaviData> NAVI_DATA_STACK = MyStack.Stack<NaviData>();
   bool _isInitDrop = false;
 
@@ -129,8 +129,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     print("fetchLocation");
     askPermission();
     await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high,
-            forceAndroidLocationManager: true)
+        desiredAccuracy: LocationAccuracy.high,
+        forceAndroidLocationManager: true)
         .timeout(Duration(seconds: CURRENT_LOCATION_CHECK_DELAY))
         .then((value) {
       print("fetchLocation _current_position $value");
@@ -147,10 +147,12 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     }
     getCurrentLocation();
     _timer = Timer.periodic(Duration(seconds: CURRENT_LOCATION_CHECK_DELAY),
-        (timer) {
-      getCurrentLocation();
-    });
+            (timer) {
+          getCurrentLocation();
+        });
   }
+
+  StreamBuilder _streamBuilder;
 
   @override
   void initState() {
@@ -170,6 +172,81 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     _flutterTts.setErrorHandler((message) {
       ttsState = TtsState.stopped;
     });
+    WidgetsBinding.instance.addObserver(this);
+    _streamBuilder = StreamBuilder(
+        stream: FirebaseFirestore.instance
+            .collection(COLLECTION_LOCATION)
+            .snapshots(),
+        builder: (context, snapshot) {
+          print(
+              "kkh snapshot _currentPlaceData docu ${_currentPlaceData.docu}");
+          if (snapshot.hasData) {
+            for (int i = 0; i < snapshot.data.docs.length; i++) {
+              Map<String, dynamic> ds = snapshot.data.docs[i].data();
+              String id = snapshot.data.docs[i].id;
+              if (id != _currentPlaceData.docu) {
+                continue;
+              }
+              String address = nullCheck(ds[FIELD_ADDRESS]);
+              String category1 = nullCheck(ds[FIELD_CATEGORY1]);
+              String category2 = nullCheck(ds[FIELD_CATEGORY2]);
+              String contact = nullCheck(ds[FIELD_CONTACT]);
+              bool elevator = ds[FIELD_ELEVATOR];
+              String floor = nullCheck(ds[FIELD_FLOOR]);
+              bool gyungsaro = ds[FIELD_GYUNGSARO];
+              double latitude = ds[FIELD_LATITUDE];
+              double longitude = ds[FIELD_LONGITUDE];
+              String name = nullCheck(ds[FIELD_NAME]);
+              bool parking = ds[FIELD_PARKING];
+              bool restroom = ds[FIELD_RESTROOM];
+              String summary = nullCheck(ds[FIELD_SUMMARY]);
+              bool using = ds[FIELD_USING];
+              Map<dynamic, dynamic> image = ds[FIELD_IMAGE];
+              String image_base = "";
+              String image_elevator = "";
+              String image_gyungsaro = "";
+              String image_parking = "";
+              String image_restroom = "";
+              if (image != null) {
+                image_base = nullCheck(image[FIELD_IMAGE_BASE]);
+                image_elevator =
+                    nullImageCheck(image[FIELD_IMAGE_ELEVATOR], image_base);
+                image_gyungsaro =
+                    nullImageCheck(image[FIELD_IMAGE_GYUNGSARO], image_base);
+                image_parking =
+                    nullImageCheck(image[FIELD_IMAGE_PARKING], image_base);
+                image_restroom =
+                    nullImageCheck(image[FIELD_IMAGE_RESTROOM], image_base);
+              }
+              PlaceData pd = PlaceData(
+                  id,
+                  address,
+                  category1,
+                  category2,
+                  contact,
+                  elevator,
+                  floor,
+                  gyungsaro,
+                  latitude,
+                  longitude,
+                  name,
+                  parking,
+                  restroom,
+                  summary,
+                  using,
+                  image_base,
+                  image_elevator,
+                  image_gyungsaro,
+                  image_parking,
+                  image_restroom);
+              DATABASE.placeDao.insertData(pd);
+              _currentPlaceData = pd;
+            }
+            return detailView();
+          } else {
+            return Container();
+          }
+        });
   }
 
   @override
@@ -186,11 +263,12 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     }
     if (state == AppLifecycleState.resumed) {
       print("didChangeAppLifecycleState resumed");
+      // Navigator.popAndPushNamed(context, MainView.route);
     }
   }
 
   moveCameraPositionSimply(double lat, double lon, [double zoom]) {
-    print("moveCameraPositionSimply zoom $zoom");
+    print("moveCameraPositionSimply lat $lat lon $lat zoom $zoom");
     if (zoom != null) {
       CAMERA_POSITION_CENTER =
           CameraPosition(target: LatLng(lat, lon), zoom: zoom);
@@ -205,6 +283,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
 
   moveCameraPosition(double lat, double lon, double bearing, bool fit,
       [int gap]) {
+    print("moveCameraPosition lat $lat lon $lat bearing $bearing");
     double zoom = MAX_ZOOM;
     if (fit && gap != null) {
       switch (gap) {
@@ -229,7 +308,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     }
 
     print(
-        "moveCameraPosition zoom $zoom gap $gap bearing $bearing fit $fit LATLNG_LIST ${LATLNG_LIST.length}");
+        "moveCameraPosition zoom $zoom gap $gap bearing $bearing fit $fit LATLNG_LIST ${LATLNG_LIST
+            .length}");
     CAMERA_POSITION_CENTER =
         CameraPosition(target: LatLng(lat, lon), zoom: zoom, bearing: bearing);
 
@@ -249,18 +329,11 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       _current_position = getFakePosition();
     }
     print(
-        "getCurrentLocation _isNaviStarted $_isNaviStarted _isSetMapCenter $_isSetMapCenter current $_current_position");
-    if (!_isSetMapCenter) {
-      moveCameraPosition(
-          _current_position.latitude, _current_position.longitude, 0, true);
-      setState(() {
-        updateFilteredList(true);
-      });
-    } else {}
-
+        "getCurrentLocation _isNaviStarted $_isNaviStarted current $_current_position");
     if (_isNaviStarted) {
       checkDistance();
     } else {
+      makeList();
       setState(() {});
     }
   }
@@ -269,33 +342,52 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
 
   Widget mapWidget() {
     print("mapWidget");
-    if (!_isInitDrop) {
-      updateFilteredList();
-      _isInitDrop = true;
-    }
-
     return OrientationBuilder(builder: (_, orientation) {
       if (orientation == Orientation.portrait) {
-        MAP_WIDTH = MediaQuery.of(context).size.width;
+        MAP_WIDTH = MediaQuery
+            .of(context)
+            .size
+            .width;
         if (_isShowingMapOnly) {
-          MAP_HEIGHT = MediaQuery.of(context).size.height;
+          MAP_HEIGHT = MediaQuery
+              .of(context)
+              .size
+              .height;
         } else {
           if (_isNaviStarted) {
-            MAP_HEIGHT = MediaQuery.of(context).size.height * 0.85;
+            MAP_HEIGHT = MediaQuery
+                .of(context)
+                .size
+                .height * 0.85;
           } else {
-            MAP_HEIGHT = MediaQuery.of(context).size.height * 0.7;
+            MAP_HEIGHT = MediaQuery
+                .of(context)
+                .size
+                .height * 0.7;
           }
         }
       } else {
-        MAP_HEIGHT = MediaQuery.of(context).size.height;
+        MAP_HEIGHT = MediaQuery
+            .of(context)
+            .size
+            .height;
         if (_isShowingMapOnly) {
-          MAP_WIDTH = MediaQuery.of(context).size.width;
+          MAP_WIDTH = MediaQuery
+              .of(context)
+              .size
+              .width;
         } else {
           if (_isNaviStarted) {
             MAP_WIDTH =
-                MediaQuery.of(context).size.width - NAVI_DETAIL_RIGHT_WIDTH;
+                MediaQuery
+                    .of(context)
+                    .size
+                    .width - NAVI_DETAIL_RIGHT_WIDTH;
           } else {
-            MAP_WIDTH = MediaQuery.of(context).size.width * 0.5;
+            MAP_WIDTH = MediaQuery
+                .of(context)
+                .size
+                .width * 0.5;
           }
         }
       }
@@ -309,7 +401,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             pathOverlays: _polyLineList.toSet(),
             initialCameraPosition: CAMERA_POSITION_CENTER,
             markers: createMarker(),
-            circles: createCircle(),
+            // circles: createCircle(),
             tiltGestureEnable: true,
             mapType: MapType.Basic,
             onMapCreated: (controller) {
@@ -317,7 +409,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             },
             rotationGestureEnable: true,
             locationButtonEnable: true,
-            initLocationTrackingMode: LocationTrackingMode.Follow,
+            // initLocationTrackingMode: LocationTrackingMode.Follow,
             zoomGestureEnable: true,
             onMapTap: (latLng) {
               hideDetail();
@@ -338,7 +430,10 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       PlaceData data = FILTERED_LIST[i];
       double distance = _distanceHash[data.docu];
 
-      String title = "[${data.category2}] ${data.name}~${distance.toInt()}m";
+      String title =
+          "${data.name}[~${distance.toInt()}m]\n${data.address.replaceAll(
+          "서울시 성동구 ", "")}";
+      print("info title $title");
       Marker marker = Marker(
           markerId: data.docu,
           position: LatLng(data.latitude, data.longitude),
@@ -358,7 +453,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       _currentLocationMarker = Marker(
         markerId: "current",
         position:
-            LatLng(_current_position.latitude, _current_position.longitude),
+        LatLng(_current_position.latitude, _current_position.longitude),
         iconTintColor: Colors.blue,
         infoWindow: StringClass.CURRENT_LOCATION,
       );
@@ -383,10 +478,12 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       SearchResultData data = SEARCH_RESULT_LIST[i];
       double distance = Geolocator.distanceBetween(_current_position.latitude,
           _current_position.longitude, data.latitude, data.longitude);
+      String title = "${data.address}[~${distance.toInt()}m]";
+      print("info title $title");
       Marker m = Marker(
           markerId: "search$i",
           position: LatLng(data.latitude, data.longitude),
-          infoWindow: "${data.address}~${distance.toInt()}m",
+          infoWindow: title,
           iconTintColor: Color.fromARGB(255, 0, 255, 0),
           onMarkerTab: (marker, iconSize) {
             showSearchResultView(data);
@@ -409,12 +506,12 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     return WillPopScope(
         child: Scaffold(
             body: Stack(children: [
-          mapWidget(),
-          dropDownView(),
-          menuView(),
-          searchView(),
-          _isShowingMapOnly ? Container() : detailView()
-        ])),
+              mapWidget(),
+              dropDownView(),
+              menuView(),
+              searchView(),
+              _isShowingMapOnly ? Container() : detailView_()
+            ])),
         onWillPop: () async {
           showExitDialog();
           return false;
@@ -424,7 +521,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   void showExitDialog() {
     showDialog(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) =>
+            AlertDialog(
               title: new Text(StringClass.DIALOG_TITLE_EXIT),
               content: new Text(StringClass.DIALOG_MESSAGE_EXIT),
               actions: <Widget>[
@@ -515,7 +613,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             margin: EdgeInsets.only(right: 10, left: 10, top: 10 + PADDING_TOP),
             color: Colors.transparent,
             child: PopupMenuButton<int>(
-              itemBuilder: (context) => [
+              itemBuilder: (context) =>
+              [
                 PopupMenuItem(value: 4, child: Text(StringClass.GO_UPDATE)),
                 PopupMenuItem(value: 0, child: Text(StringClass.NOTICE)),
                 PopupMenuItem(value: 1, child: Text(StringClass.REVIEW)),
@@ -563,6 +662,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     setState(() {
       _isShowingMapOnly = false;
       moveCameraPositionSimply(data.latitude, data.longitude, MAX_ZOOM);
+      initState();
     });
   }
 
@@ -580,9 +680,15 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   searchTitleView(bool portrait) {
     var width;
     if (portrait) {
-      width = MediaQuery.of(context).size.width;
+      width = MediaQuery
+          .of(context)
+          .size
+          .width;
     } else {
-      width = MediaQuery.of(context).size.width / 2;
+      width = MediaQuery
+          .of(context)
+          .size
+          .width / 2;
     }
     print("titleView width $width portrait $portrait");
     return Container(
@@ -615,9 +721,15 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   titleView(bool portrait) {
     var width;
     if (portrait) {
-      width = MediaQuery.of(context).size.width;
+      width = MediaQuery
+          .of(context)
+          .size
+          .width;
     } else {
-      width = MediaQuery.of(context).size.width / 2;
+      width = MediaQuery
+          .of(context)
+          .size
+          .width / 2;
     }
     print("titleView width $width portrait $portrait");
     return Container(
@@ -636,67 +748,30 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             ),
             _currentPlaceData.summary.length > 0
                 ? AutoSizeText(
-                    _currentPlaceData.summary,
-                    style: TextStyle(fontSize: getFont(8, context)),
-                    maxLines: 1,
-                    textAlign: TextAlign.center,
-                  )
+              _currentPlaceData.summary,
+              style: TextStyle(fontSize: getFont(8, context)),
+              maxLines: 1,
+              textAlign: TextAlign.center,
+            )
                 : Container(),
           ],
         ));
   }
 
-  detailView() {
-    print("detailView _isNaviStarted $_isNaviStarted");
-    if (_currentPlaceData != null) {
-      return OrientationBuilder(builder: (_, orientation) {
-        String title =
-            "[${_currentPlaceData.category2}]${_currentPlaceData.name}";
-        if (orientation == Orientation.portrait) {
-          if (_isNaviStarted) {
-            return Align(
-                alignment: Alignment.bottomCenter,
-                child: Wrap(children: [naviDetailContentView(title, true)]));
-          } else {
-            return Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                    height: MediaQuery.of(context).size.height - MAP_HEIGHT,
-                    child: Flex(
-                      direction: Axis.vertical,
-                      children: [
-                        Expanded(child: titleView(true), flex: 2),
-                        Expanded(child: tabView(true), flex: 3),
-                        Expanded(child: bottomView(true), flex: 2),
-                      ],
-                    )));
-          }
-        } else {
-          if (_isNaviStarted) {
-            return Align(
-                alignment: Alignment.bottomRight,
-                child: naviDetailContentView(title, false));
-          } else {
-            return Align(
-                alignment: Alignment.bottomRight,
-                child: Container(
-                    width: MediaQuery.of(context).size.width / 2,
-                    height: MediaQuery.of(context).size.height -
-                        TOP_BAR_HEIGHT -
-                        PADDING_TOP,
-                    child: Flex(
-                      direction: Axis.vertical,
-                      children: [
-                        Expanded(child: titleView(false), flex: 1),
-                        Expanded(child: tabView(false), flex: 2),
-                        Expanded(child: bottomView(false), flex: 1),
-                      ],
-                    )));
-          }
-        }
-      });
-    } else if (_searchResultData != null) {
-      return OrientationBuilder(builder: (_, orientation) {
+  detailView_() {
+    print("detailView_");
+    if (_searchResultData != null) {
+      return searchDetailView();
+    } else {
+      return _streamBuilder;
+    }
+
+  }
+
+  searchDetailView() {
+    if (_searchResultData != null) {
+      return OrientationBuilder(builder: (_, orientation)
+      {
         var height;
         String title = _searchResultData.address;
         if (orientation == Orientation.portrait) {
@@ -705,7 +780,10 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                 alignment: Alignment.bottomCenter,
                 child: Wrap(children: [naviDetailContentView(title, true)]));
           } else {
-            height = MediaQuery.of(context).size.height - MAP_HEIGHT;
+            height = MediaQuery
+                .of(context)
+                .size
+                .height - MAP_HEIGHT;
             return Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
@@ -727,8 +805,14 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             return Align(
                 alignment: Alignment.bottomRight,
                 child: Container(
-                    width: MediaQuery.of(context).size.width / 2,
-                    height: MediaQuery.of(context).size.height -
+                    width: MediaQuery
+                        .of(context)
+                        .size
+                        .width / 2,
+                    height: MediaQuery
+                        .of(context)
+                        .size
+                        .height -
                         TOP_BAR_HEIGHT -
                         PADDING_TOP,
                     child: Flex(
@@ -736,6 +820,68 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                       children: [
                         Expanded(child: searchTitleView(false), flex: 2),
                         Expanded(child: searchBottomView(false), flex: 1),
+                      ],
+                    )));
+          }
+        }
+      });
+    }
+  }
+
+  detailView() {
+    print(
+        "detailView _isNaviStarted $_isNaviStarted _currentPlaceData $_currentPlaceData");
+    if (_currentPlaceData != null) {
+      return OrientationBuilder(builder: (_, orientation) {
+        String title =
+            "[${_currentPlaceData.category2}]${_currentPlaceData.name}";
+        if (orientation == Orientation.portrait) {
+          if (_isNaviStarted) {
+            return Align(
+                alignment: Alignment.bottomCenter,
+                child: Wrap(children: [naviDetailContentView(title, true)]));
+          } else {
+            return Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                    height: MediaQuery
+                        .of(context)
+                        .size
+                        .height - MAP_HEIGHT,
+                    child: Flex(
+                      direction: Axis.vertical,
+                      children: [
+                        Expanded(child: titleView(true), flex: 2),
+                        Expanded(child: tabView(true), flex: 3),
+                        Expanded(child: bottomView(true), flex: 2),
+                      ],
+                    )));
+          }
+        } else {
+          if (_isNaviStarted) {
+            return Align(
+                alignment: Alignment.bottomRight,
+                child: naviDetailContentView(title, false));
+          } else {
+            return Align(
+                alignment: Alignment.bottomRight,
+                child: Container(
+                    width: MediaQuery
+                        .of(context)
+                        .size
+                        .width / 2,
+                    height: MediaQuery
+                        .of(context)
+                        .size
+                        .height -
+                        TOP_BAR_HEIGHT -
+                        PADDING_TOP,
+                    child: Flex(
+                      direction: Axis.vertical,
+                      children: [
+                        Expanded(child: titleView(false), flex: 1),
+                        Expanded(child: tabView(false), flex: 2),
+                        Expanded(child: bottomView(false), flex: 1),
                       ],
                     )));
           }
@@ -751,8 +897,14 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     var width;
     var height;
     if (portrait) {
-      width = MediaQuery.of(context).size.width;
-      height = MediaQuery.of(context).size.height - MAP_HEIGHT;
+      width = MediaQuery
+          .of(context)
+          .size
+          .width;
+      height = MediaQuery
+          .of(context)
+          .size
+          .height - MAP_HEIGHT;
       return Container(
         width: width,
         height: height,
@@ -772,8 +924,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                 )),
             _currentTtsDescription.length > 0
                 ? AutoSizeText(_currentTtsDescription,
-                    style: TextStyle(fontSize: getFont(10, context)),
-                    maxLines: 1)
+                style: TextStyle(fontSize: getFont(10, context)),
+                maxLines: 1)
                 : Container(),
             Container(
                 margin: EdgeInsets.only(top: 5),
@@ -784,37 +936,37 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                   children: [
                     Container(
                         child: FlatButton(
-                      child: AutoSizeText(
-                        StringClass.RESTARTED,
-                        style: TextStyle(fontSize: getFont(10, context)),
-                      ),
-                      onPressed: () {
-                        _progressDialog.show();
-                        isPassedFirstPos = false;
-                        getOverlay(true);
-                        if (_isUsingTTS) {
-                          _flutterTts.speak(StringClass.TTS_RESTARTED);
-                        }
-                      },
-                    )),
+                          child: AutoSizeText(
+                            StringClass.RESTARTED,
+                            style: TextStyle(fontSize: getFont(10, context)),
+                          ),
+                          onPressed: () {
+                            _progressDialog.show();
+                            isPassedFirstPos = false;
+                            getOverlay(true);
+                            if (_isUsingTTS) {
+                              _flutterTts.speak(StringClass.TTS_RESTARTED);
+                            }
+                          },
+                        )),
                     Container(
                         child: FlatButton(
-                      child: AutoSizeText(
-                        StringClass.CANCEL,
-                        style: TextStyle(fontSize: getFont(10, context)),
-                      ),
-                      onPressed: () {
-                        _isNaviStarted = false;
-                        // _controller.hideMarkerInfoWindow(
-                        //     MarkerId(_currentPlaceData.docu));
+                          child: AutoSizeText(
+                            StringClass.CANCEL,
+                            style: TextStyle(fontSize: getFont(10, context)),
+                          ),
+                          onPressed: () {
+                            _isNaviStarted = false;
+                            // _controller.hideMarkerInfoWindow(
+                            //     MarkerId(_currentPlaceData.docu));
 
-                        stopNavi();
-                        if (_isUsingTTS) {
-                          _flutterTts.speak(StringClass.TTS_CANCELED);
-                        }
-                        hideDetail();
-                      },
-                    ))
+                            stopNavi();
+                            if (_isUsingTTS) {
+                              _flutterTts.speak(StringClass.TTS_CANCELED);
+                            }
+                            hideDetail();
+                          },
+                        ))
                   ],
                 ))
           ],
@@ -823,11 +975,14 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     } else {
       width = NAVI_DETAIL_RIGHT_WIDTH;
       height =
-          MediaQuery.of(context).size.height - TOP_BAR_HEIGHT - PADDING_TOP;
+          MediaQuery
+              .of(context)
+              .size
+              .height - TOP_BAR_HEIGHT - PADDING_TOP;
       var summaryTitle = "";
       if (_currentPlaceData != null) {
         summaryTitle =
-            "[${_currentPlaceData.category2}]${_currentPlaceData.name}";
+        "[${_currentPlaceData.category2}]${_currentPlaceData.name}";
       } else if (_searchResultData != null) {
         summaryTitle = _searchResultData.address;
       }
@@ -848,37 +1003,37 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                 )),
             _currentTtsDescription.length > 0
                 ? AutoSizeText(_currentTtsDescription,
-                    style: TextStyle(fontSize: getFont(10, context)),
-                    maxLines: 1)
+                style: TextStyle(fontSize: getFont(10, context)),
+                maxLines: 1)
                 : Container(),
             Container(
                 child: FlatButton(
-              child: AutoSizeText(
-                StringClass.RESTARTED,
-                style: TextStyle(fontSize: getFont(10, context)),
-              ),
-              onPressed: () {
-                naviRestart();
-              },
-            )),
+                  child: AutoSizeText(
+                    StringClass.RESTARTED,
+                    style: TextStyle(fontSize: getFont(10, context)),
+                  ),
+                  onPressed: () {
+                    naviRestart();
+                  },
+                )),
             Container(
                 child: FlatButton(
-              child: AutoSizeText(
-                StringClass.CANCEL,
-                style: TextStyle(fontSize: getFont(10, context)),
-              ),
-              onPressed: () {
-                _isNaviStarted = false;
-                // _controller.hideMarkerInfoWindow(
-                //     MarkerId(_currentPlaceData.docu));
+                  child: AutoSizeText(
+                    StringClass.CANCEL,
+                    style: TextStyle(fontSize: getFont(10, context)),
+                  ),
+                  onPressed: () {
+                    _isNaviStarted = false;
+                    // _controller.hideMarkerInfoWindow(
+                    //     MarkerId(_currentPlaceData.docu));
 
-                stopNavi();
-                if (_isUsingTTS) {
-                  _flutterTts.speak(StringClass.TTS_CANCELED);
-                }
-                hideDetail();
-              },
-            ))
+                    stopNavi();
+                    if (_isUsingTTS) {
+                      _flutterTts.speak(StringClass.TTS_CANCELED);
+                    }
+                    hideDetail();
+                  },
+                ))
           ],
         ),
       );
@@ -899,11 +1054,23 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     var width;
     var height;
     if (portrait) {
-      width = MediaQuery.of(context).size.width;
-      height = MediaQuery.of(context).size.height / 5;
+      width = MediaQuery
+          .of(context)
+          .size
+          .width;
+      height = MediaQuery
+          .of(context)
+          .size
+          .height / 5;
     } else {
-      width = MediaQuery.of(context).size.width / 2;
-      height = MediaQuery.of(context).size.height / 2;
+      width = MediaQuery
+          .of(context)
+          .size
+          .width / 2;
+      height = MediaQuery
+          .of(context)
+          .size
+          .height / 2;
     }
     print("tabView width $width height $height portrait $portrait");
     return DefaultTabController(
@@ -986,31 +1153,31 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     print("getTapImageView path $path");
     if (path == null || path.isEmpty) {
       path =
-          "https://firebasestorage.googleapis.com/v0/b/nodisable.appspot.com/o/ready.png?alt=media&token=6a6b0cee-e3a3-4354-9ba7-7cfd1d835145";
+      "https://firebasestorage.googleapis.com/v0/b/nodisable.appspot.com/o/ready.png?alt=media&token=6a6b0cee-e3a3-4354-9ba7-7cfd1d835145";
       return Container(
           child: Stack(
-        children: [
-          Container(
-              alignment: Alignment.center,
-              child: FlatButton(
-                child: Image.network(path),
-                onPressed: () {
-                  showImage(path);
-                },
-              )),
-          Container(
-              alignment: Alignment.center,
-              child: FlatButton(
-                onPressed: () {
-                  showImage(path);
-                },
-                child: Text(
-                  StringClass.READY,
-                  style: TextStyle(backgroundColor: Colors.white),
-                ),
-              ))
-        ],
-      ));
+            children: [
+              Container(
+                  alignment: Alignment.center,
+                  child: FlatButton(
+                    child: Image.network(path),
+                    onPressed: () {
+                      showImage(path);
+                    },
+                  )),
+              Container(
+                  alignment: Alignment.center,
+                  child: FlatButton(
+                    onPressed: () {
+                      showImage(path);
+                    },
+                    child: Text(
+                      StringClass.READY,
+                      style: TextStyle(backgroundColor: Colors.white),
+                    ),
+                  ))
+            ],
+          ));
     } else {
       return Container(
         alignment: Alignment.center,
@@ -1027,9 +1194,15 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   searchBottomView(bool portrait) {
     var width;
     if (portrait) {
-      width = MediaQuery.of(context).size.width;
+      width = MediaQuery
+          .of(context)
+          .size
+          .width;
     } else {
-      width = MediaQuery.of(context).size.width / 2;
+      width = MediaQuery
+          .of(context)
+          .size
+          .width / 2;
     }
     return Container(
         width: width,
@@ -1071,9 +1244,15 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   bottomView(bool portrait) {
     var width;
     if (portrait) {
-      width = MediaQuery.of(context).size.width;
+      width = MediaQuery
+          .of(context)
+          .size
+          .width;
     } else {
-      width = MediaQuery.of(context).size.width / 2;
+      width = MediaQuery
+          .of(context)
+          .size
+          .width / 2;
     }
     print("bottomView width $width portrait $portrait");
     return Container(
@@ -1131,7 +1310,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     TextEditingController _controller = TextEditingController();
     showDialog(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) =>
+            AlertDialog(
               title: new Text(StringClass.DIALOG_TITLE_SEARCH),
               content: TextField(
                 onChanged: (value) {},
@@ -1150,9 +1330,9 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                     onPressed: () {
                       showToast(_controller.text);
                       getSearchResult(
-                              _controller.text,
-                              _current_position.latitude,
-                              _current_position.longitude)
+                          _controller.text,
+                          _current_position.latitude,
+                          _current_position.longitude)
                           .then((value) {
                         SEARCH_RESULT_LIST = value;
                         showToast(
@@ -1201,7 +1381,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       target_lon = _searchResultData.longitude;
     }
     requestDirection(_current_position.latitude, _current_position.longitude,
-            target_lat, target_lon)
+        target_lat, target_lon)
         .then((value) {
       _isNaviStarted = true;
       Navigator.of(context).pop('dialog');
@@ -1220,7 +1400,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
         for (int j = 0; j < nv.coordinates.length; j++) {
           if (nv.coordinates != null) {
             firstPosition =
-                new LatLng(nv.coordinates[j][1], nv.coordinates[j][0]);
+            new LatLng(nv.coordinates[j][1], nv.coordinates[j][0]);
             break;
           }
         }
@@ -1233,11 +1413,15 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             firstPosition.latitude,
             firstPosition.longitude);
         print(
-            "getOverlay getCurrentLocation  ${_current_position.latitude} ${_current_position.longitude} to ${firstPosition.latitude} ${firstPosition.longitude} bearing $value");
+            "getOverlay getCurrentLocation  ${_current_position
+                .latitude} ${_current_position.longitude} to ${firstPosition
+                .latitude} ${firstPosition.longitude} bearing $value");
 
         moveCameraPosition(_current_position.latitude,
             _current_position.longitude, bearing, true, 99);
-        setState(() {});
+        setState(() {
+          initState();
+        });
       });
     });
   }
@@ -1253,34 +1437,21 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
           mainAxisSize: MainAxisSize.max,
           children: [
             DropdownButton(
-                value: _selectedCategoryRadius,
-                items: dropDownMenuRadiusItemList,
-                onChanged: (value) {
-                  _selectedCategoryRadius = value;
-                  print("DropdownButton LATLNG_LIST ${LATLNG_LIST.length}");
-                  updateFilteredList();
-                  moveCameraPosition(
-                      _current_position.latitude,
-                      _current_position.longitude,
-                      0,
-                      true,
-                      _selectedCategoryRadius);
-                  setState(() {});
-                }),
-            DropdownButton(
                 value: _selectedCategory1,
                 items: dropDownMenuItemList,
                 onChanged: (value) {
                   _selectedCategory1 = value;
                   _selectedCategory2 = 0;
-                  updateFilteredList();
+                  makeList();
+                  setState(() {});
                 }),
             DropdownButton(
                 value: _selectedCategory2,
                 items: dropDownHash[dropDownList[_selectedCategory1]],
                 onChanged: (value) {
                   _selectedCategory2 = value;
-                  updateFilteredList();
+                  makeList();
+                  setState(() {});
                 }),
           ],
         ));
@@ -1424,7 +1595,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       } else {
         showDialog(
             context: context,
-            builder: (context) => AlertDialog(
+            builder: (context) =>
+                AlertDialog(
                   title: new Text(StringClass.DIALOG_TITLE_TTS),
                   content: new Text(StringClass.DIALOG_MESSAGE_TTS),
                   actions: <Widget>[
@@ -1476,126 +1648,15 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     );
   }
 
-  getRadiusInt() {
-    double radius = 0;
-    switch (_selectedCategoryRadius) {
-      case 0:
-        radius = 100;
-        break;
-      case 1:
-        radius = 200;
-        break;
-      case 2:
-        radius = 300;
-        break;
-      case 3:
-        radius = 400;
-        break;
-      case 4:
-        radius = 500;
-        break;
-    }
-    return radius;
-  }
-
-  void updateFilteredListWithRadius() {
-    var tempList = List.from(FILTERED_LIST);
-    print(
-        "updateFilteredListWithRadius _selectedCategoryRadius $_selectedCategoryRadius radius ${getRadiusInt()} tempList ${tempList.length}");
-    for (int i = 0; i < tempList.length; i++) {
-      PlaceData d = tempList[i];
-      double distance = Geolocator.distanceBetween(_current_position.latitude,
-          _current_position.longitude, d.latitude, d.longitude);
-      _distanceHash.putIfAbsent(d.docu, () => distance);
-      if (getRadiusInt() == 0) {
-        continue;
-      }
-      if (distance > getRadiusInt()) {
-        print("updateFilteredListWithRadius remove");
-        FILTERED_LIST.removeAt(i);
-      }
-    }
-    print(
-        "updateFilteredListWithRadius before ${tempList.length} after ${FILTERED_LIST.length}");
-    setState(() {});
-  }
-
-  void updateFilteredList([bool init = false]) {
-    print("updateFilteredList init $init LATLNG_LIST ${LATLNG_LIST.length}");
-    makeList();
-    if (!init) {
-      setState(() {});
-    } else {
-      if (_current_position == null) {
-        _isSetMapCenter = false;
-        return;
-      }
-      for (int i = 0; i < 5; i++) {
-        makeList();
-        if (LATLNG_LIST.length > 0) {
-          moveCameraPosition(_current_position.latitude,
-              _current_position.longitude, 0, true, i);
-          break;
-        }
-        _selectedCategoryRadius++;
-      }
-
-      print(
-          "updateFilteredList _selectedCategoryRadius $_selectedCategoryRadius");
-      if (_selectedCategoryRadius == 5) {
-        _selectedCategoryRadius = 0;
-        if (_controller != null) {
-          CAMERA_POSITION_CENTER = CameraPosition(
-              target: LatLng(
-                  _current_position.latitude, _current_position.longitude),
-              zoom: _zoom);
-          _controller.moveCamera(
-              CameraUpdate.toCameraPosition(CAMERA_POSITION_CENTER));
-        }
-      }
-      _isSetMapCenter = true;
-      setState(() {});
-    }
-  }
-
-  createCircle() {
-    print("createCircle _selectedCategoryRadius $_selectedCategoryRadius");
-    List<CircleOverlay> circles = List<CircleOverlay>();
-    if (_current_position != null) {
-      circles = List.from([
-        CircleOverlay(
-          overlayId: "current",
-          color: Colors.cyan,
-          outlineColor: Colors.indigo,
-          outlineWidth: 1,
-          center:
-              LatLng(_current_position.latitude, _current_position.longitude),
-          radius: getRadiusInt(),
-          onTap: (overlayId) {
-            hideDetail();
-          },
-        )
-      ]);
-    }
-    return circles;
-  }
-
   void makeList() {
-    print("makeList");
+    print("makeList PLACE_LIST ${PLACE_LIST.length}");
     FILTERED_LIST.clear();
     LATLNG_LIST.clear();
-    if (_current_position == null) {
-      print("updateFilteredList current position is null");
-      return;
-    }
     for (int i = 0; i < PLACE_LIST.length; i++) {
       PlaceData data = PLACE_LIST[i];
       double distance = Geolocator.distanceBetween(_current_position.latitude,
           _current_position.longitude, data.latitude, data.longitude);
       _distanceHash.putIfAbsent(data.docu, () => distance);
-      if (getRadiusInt() > 0 && distance > getRadiusInt()) {
-        continue;
-      }
 
       String category1 = data.category1;
       String category2 = data.category2;
@@ -1632,6 +1693,21 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             mainAxisSize: MainAxisSize.min,
             children: [
               FlatButton(
+                minWidth: 50,
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Image.asset("asset/images/search.jpg", width: 20, height: 20),
+                  AutoSizeText(
+                    StringClass.SEARCH,
+                    minFontSize: 1,
+                    maxFontSize: getFont(10, context),
+                    style: TextStyle(backgroundColor: Colors.white),
+                  ),
+                ]),
+                onPressed: () {
+                  showSearchDialog();
+                },
+              ),
+              FlatButton(
                   minWidth: 50,
                   onPressed: () {
                     SEARCH_RESULT_LIST.clear();
@@ -1647,22 +1723,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                       maxFontSize: getFont(10, context),
                       style: TextStyle(backgroundColor: Colors.white),
                     ),
-                  ])),
-              FlatButton(
-                minWidth: 50,
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Image.asset("asset/images/search.jpg", width: 20, height: 20),
-                  AutoSizeText(
-                    StringClass.SEARCH,
-                    minFontSize: 1,
-                    maxFontSize: getFont(10, context),
-                    style: TextStyle(backgroundColor: Colors.white),
-                  ),
-                ]),
-                onPressed: () {
-                  showSearchDialog();
-                },
-              ),
+                  ]))
             ],
           ));
     });
@@ -1672,7 +1733,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     print("showSearchResultDialog list ${list.length}");
     showDialog(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) =>
+            AlertDialog(
               title: new Text(StringClass.DIALOG_TITLE_SEARCH),
               content: ListView.builder(
                   itemCount: list.length,

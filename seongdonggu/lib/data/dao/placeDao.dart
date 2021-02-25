@@ -14,4 +14,7 @@ abstract class PlaceDao {
 
   @Query('DELETE FROM placeTable')
   Future<void> deleteAll();
+
+  @Query('DELETE FROM placeTable WHERE docu = :param')
+  Future<void> deleteByDocu(String param);
 }

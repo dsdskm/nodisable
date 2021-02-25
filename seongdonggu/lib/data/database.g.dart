@@ -188,6 +188,12 @@ class _$PlaceDao extends PlaceDao {
   }
 
   @override
+  Future<void> deleteByDocu(String param) async {
+    await _queryAdapter.queryNoReturn('DELETE FROM placeTable WHERE docu = ?',
+        arguments: <dynamic>[param]);
+  }
+
+  @override
   Future<void> insertData(PlaceData data) async {
     await _placeDataInsertionAdapter.insert(data, OnConflictStrategy.abort);
   }
