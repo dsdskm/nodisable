@@ -154,32 +154,14 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
 
   StreamBuilder _streamBuilder;
 
-  @override
-  void initState() {
-    super.initState();
-    print("initState");
-    Screen.keepOn(true);
-    startLocationMonitoring();
-
-    _flutterTts.setStartHandler(() {
-      setState(() {
-        ttsState = TtsState.playing;
-      });
-    });
-    _flutterTts.setCompletionHandler(() {
-      ttsState = TtsState.stopped;
-    });
-    _flutterTts.setErrorHandler((message) {
-      ttsState = TtsState.stopped;
-    });
-    WidgetsBinding.instance.addObserver(this);
-    _streamBuilder = StreamBuilder(
+  getStreamBuilder(){
+    return StreamBuilder(
         stream: FirebaseFirestore.instance
             .collection(COLLECTION_LOCATION)
             .snapshots(),
         builder: (context, snapshot) {
           print(
-              "kkh snapshot _currentPlaceData docu ${_currentPlaceData.docu}");
+              "snapshot _currentPlaceData docu ${_currentPlaceData.docu}");
           if (snapshot.hasData) {
             for (int i = 0; i < snapshot.data.docs.length; i++) {
               Map<String, dynamic> ds = snapshot.data.docs[i].data();
@@ -247,6 +229,28 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             return Container();
           }
         });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    print("initState");
+    Screen.keepOn(true);
+    startLocationMonitoring();
+
+    _flutterTts.setStartHandler(() {
+      setState(() {
+        ttsState = TtsState.playing;
+      });
+    });
+    _flutterTts.setCompletionHandler(() {
+      ttsState = TtsState.stopped;
+    });
+    _flutterTts.setErrorHandler((message) {
+      ttsState = TtsState.stopped;
+    });
+    WidgetsBinding.instance.addObserver(this);
+    _streamBuilder = getStreamBuilder();
   }
 
   @override
@@ -759,11 +763,16 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   }
 
   detailView_() {
-    print("detailView_");
+    print("detailView_ isNaviStarted $_isNaviStarted");
     if (_searchResultData != null) {
       return searchDetailView();
     } else {
-      return _streamBuilder;
+      if(_isNaviStarted){
+        return getStreamBuilder();
+      } else {
+        return _streamBuilder;
+      }
+
     }
 
   }
@@ -1420,7 +1429,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
         moveCameraPosition(_current_position.latitude,
             _current_position.longitude, bearing, true, 99);
         setState(() {
-          initState();
+          // initState();
         });
       });
     });

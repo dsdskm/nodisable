@@ -209,9 +209,9 @@ class _MyHomePageState extends State<MyHomePage> {
             image_gyungsaro,
             image_parking,
             image_restroom);
-        // if (pd.using == null || pd.using) {
+        if (pd.using == null || pd.using) {
           list.add(pd);
-        // }
+        }
       }
       PLACE_LIST = list;
       DATABASE.placeDao.insertAll(list);
