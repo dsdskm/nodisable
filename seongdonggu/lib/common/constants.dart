@@ -1,3 +1,6 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
 final DEBUG = false;
 
 final NAVER_CLIENT_ID = "quld7x8r88";
@@ -44,3 +47,9 @@ final NAVI_DETAIL_BOTTOM_HEIGHT = 100.0;
 final NAVI_DETAIL_RIGHT_WIDTH = 180.0;
 final RADIUS = ["100m", "200m", "300m", "400m", "500m"];
 enum TtsState { playing, stopped }
+
+BoxDecoration BOX_DECORATION = new BoxDecoration(
+    border: new Border.all(width: 1, color: Colors.transparent),
+//color is transparent so that it does not blend with the actual color specified
+    borderRadius: const BorderRadius.all(const Radius.circular(30.0)),
+    color: new Color.fromRGBO(0, 0, 0, 0.1));

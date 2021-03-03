@@ -30,6 +30,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    //SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: StringClass.LABEL,
@@ -87,6 +88,12 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     setSize(MediaQuery.of(context));
+    var imgSize = MediaQuery.of(context).size.width / 1.5;
+    var fontSize = 40;
+    if (MediaQuery.of(context).orientation == Orientation.landscape) {
+      imgSize = MediaQuery.of(context).size.height / 1.5;
+      fontSize = 25;
+    }
     return Scaffold(
         body: Center(
             child: GestureDetector(
@@ -100,12 +107,13 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [
                         Image.asset(
                           "asset/images/logo.png",
-                          width: MediaQuery.of(context).size.width / 1.5,
-                          height: MediaQuery.of(context).size.width / 1.5,
+                          width: imgSize,
+                          height: imgSize,
                         ),
                         AutoSizeText(
                           StringClass.LABEL,
-                          style: TextStyle(fontSize: getFont(40, context)),
+                          style:
+                              TextStyle(fontSize: getFont(fontSize, context)),
                           maxLines: 1,
                         ),
                       ],

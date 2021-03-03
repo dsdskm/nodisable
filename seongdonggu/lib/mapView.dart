@@ -129,8 +129,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     print("fetchLocation");
     askPermission();
     await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        forceAndroidLocationManager: true)
+            desiredAccuracy: LocationAccuracy.high,
+            forceAndroidLocationManager: true)
         .timeout(Duration(seconds: CURRENT_LOCATION_CHECK_DELAY))
         .then((value) {
       print("fetchLocation _current_position $value");
@@ -147,21 +147,20 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     }
     getCurrentLocation();
     _timer = Timer.periodic(Duration(seconds: CURRENT_LOCATION_CHECK_DELAY),
-            (timer) {
-          getCurrentLocation();
-        });
+        (timer) {
+      getCurrentLocation();
+    });
   }
 
   StreamBuilder _streamBuilder;
 
-  getStreamBuilder(){
+  getStreamBuilder() {
     return StreamBuilder(
         stream: FirebaseFirestore.instance
             .collection(COLLECTION_LOCATION)
             .snapshots(),
         builder: (context, snapshot) {
-          print(
-              "snapshot _currentPlaceData docu ${_currentPlaceData.docu}");
+          print("snapshot _currentPlaceData docu ${_currentPlaceData.docu}");
           if (snapshot.hasData) {
             for (int i = 0; i < snapshot.data.docs.length; i++) {
               Map<String, dynamic> ds = snapshot.data.docs[i].data();
@@ -312,8 +311,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     }
 
     print(
-        "moveCameraPosition zoom $zoom gap $gap bearing $bearing fit $fit LATLNG_LIST ${LATLNG_LIST
-            .length}");
+        "moveCameraPosition zoom $zoom gap $gap bearing $bearing fit $fit LATLNG_LIST ${LATLNG_LIST.length}");
     CAMERA_POSITION_CENTER =
         CameraPosition(target: LatLng(lat, lon), zoom: zoom, bearing: bearing);
 
@@ -344,85 +342,53 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
 
   List<Marker> markers = new List();
 
-  Widget mapWidget() {
-    print("mapWidget");
-    return OrientationBuilder(builder: (_, orientation) {
-      if (orientation == Orientation.portrait) {
-        MAP_WIDTH = MediaQuery
-            .of(context)
-            .size
-            .width;
-        if (_isShowingMapOnly) {
-          MAP_HEIGHT = MediaQuery
-              .of(context)
-              .size
-              .height;
-        } else {
-          if (_isNaviStarted) {
-            MAP_HEIGHT = MediaQuery
-                .of(context)
-                .size
-                .height * 0.85;
-          } else {
-            MAP_HEIGHT = MediaQuery
-                .of(context)
-                .size
-                .height * 0.7;
-          }
-        }
-      } else {
-        MAP_HEIGHT = MediaQuery
-            .of(context)
-            .size
-            .height;
-        if (_isShowingMapOnly) {
-          MAP_WIDTH = MediaQuery
-              .of(context)
-              .size
-              .width;
-        } else {
-          if (_isNaviStarted) {
-            MAP_WIDTH =
-                MediaQuery
-                    .of(context)
-                    .size
-                    .width - NAVI_DETAIL_RIGHT_WIDTH;
-          } else {
-            MAP_WIDTH = MediaQuery
-                .of(context)
-                .size
-                .width * 0.5;
-          }
-        }
-      }
-      print(
-          "mapWidget orientation $orientation MAP_WIDTH $MAP_WIDTH MAP_HEIGHT $MAP_HEIGHT _isShowingMapOnly $_isShowingMapOnly");
-      return Container(
-          padding: EdgeInsets.only(top: PADDING_TOP + TOP_BAR_HEIGHT),
-          width: MAP_WIDTH,
-          height: MAP_HEIGHT,
-          child: NaverMap(
-            pathOverlays: _polyLineList.toSet(),
-            initialCameraPosition: CAMERA_POSITION_CENTER,
-            markers: createMarker(),
-            // circles: createCircle(),
-            tiltGestureEnable: true,
-            mapType: MapType.Basic,
-            onMapCreated: (controller) {
-              _controller = controller;
-            },
-            rotationGestureEnable: true,
-            locationButtonEnable: true,
-            // initLocationTrackingMode: LocationTrackingMode.Follow,
-            zoomGestureEnable: true,
-            onMapTap: (latLng) {
-              hideDetail();
-            },
-            onMapDoubleTap: (latLng) {
-              hideDetail();
-            },
-          ));
-    });
+  Widget mapWidgetPortrait() {
+    print("mapWidgetPortrait");
+    var orientation = MediaQuery.of(context).orientation;
+    if (orientation == Orientation.portrait) {
+      return mapView(SIZE_WIDTH, SIZE_HEIGHT);
+    } else {
+      return Container();
+    }
+  }
+
+  Widget mapWidgetLand() {
+    print("mapWidgetLand");
+    var orientation = MediaQuery.of(context).orientation;
+    if (orientation == Orientation.landscape) {
+      return mapView(SIZE_WIDTH, SIZE_HEIGHT);
+    } else {
+      return Container();
+    }
+  }
+
+  Widget mapView(width, height) {
+    print("mapView width $width height $height");
+    return Container(
+        padding: EdgeInsets.only(top: PADDING_TOP + TOP_BAR_HEIGHT),
+        width: width,
+        height: height,
+        child: NaverMap(
+          pathOverlays: _polyLineList.toSet(),
+          initialCameraPosition: CAMERA_POSITION_CENTER,
+          markers: createMarker(),
+          // circles: createCircle(),
+          tiltGestureEnable: true,
+          mapType: MapType.Basic,
+          onMapCreated: (controller) {
+            _controller = controller;
+          },
+          rotationGestureEnable: true,
+          locationButtonEnable: true,
+          // initLocationTrackingMode: LocationTrackingMode.Follow,
+          zoomGestureEnable: true,
+          onMapTap: (latLng) {
+            hideDetail();
+          },
+          onMapDoubleTap: (latLng) {
+            hideDetail();
+          },
+        ));
   }
 
   Marker _currentLocationMarker;
@@ -435,8 +401,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       double distance = _distanceHash[data.docu];
 
       String title =
-          "${data.name}[~${distance.toInt()}m]\n${data.address.replaceAll(
-          "서울시 성동구 ", "")}";
+          "${data.name}[~${distance.toInt()}m]\n${data.address.replaceAll("서울시 성동구 ", "")}";
       print("info title $title");
       Marker marker = Marker(
           markerId: data.docu,
@@ -457,7 +422,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       _currentLocationMarker = Marker(
         markerId: "current",
         position:
-        LatLng(_current_position.latitude, _current_position.longitude),
+            LatLng(_current_position.latitude, _current_position.longitude),
         iconTintColor: Colors.blue,
         infoWindow: StringClass.CURRENT_LOCATION,
       );
@@ -507,10 +472,13 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       context,
       message: Text(StringClass.NAVI_LOADING),
     );
+    var orientation = MediaQuery.of(context).orientation;
     return WillPopScope(
         child: Scaffold(
+            resizeToAvoidBottomInset: false,
             body: Stack(children: [
-              mapWidget(),
+              mapWidgetPortrait(),
+              mapWidgetLand(),
               dropDownView(),
               menuView(),
               searchView(),
@@ -525,8 +493,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   void showExitDialog() {
     showDialog(
         context: context,
-        builder: (context) =>
-            AlertDialog(
+        builder: (context) => AlertDialog(
               title: new Text(StringClass.DIALOG_TITLE_EXIT),
               content: new Text(StringClass.DIALOG_MESSAGE_EXIT),
               actions: <Widget>[
@@ -611,14 +578,14 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   }
 
   menuView() {
+    print("menuView");
     return Align(
         alignment: Alignment.topRight,
         child: Container(
             margin: EdgeInsets.only(right: 10, left: 10, top: 10 + PADDING_TOP),
             color: Colors.transparent,
             child: PopupMenuButton<int>(
-              itemBuilder: (context) =>
-              [
+              itemBuilder: (context) => [
                 PopupMenuItem(value: 4, child: Text(StringClass.GO_UPDATE)),
                 PopupMenuItem(value: 0, child: Text(StringClass.NOTICE)),
                 PopupMenuItem(value: 1, child: Text(StringClass.REVIEW)),
@@ -684,15 +651,9 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   searchTitleView(bool portrait) {
     var width;
     if (portrait) {
-      width = MediaQuery
-          .of(context)
-          .size
-          .width;
+      width = SIZE_WIDTH;
     } else {
-      width = MediaQuery
-          .of(context)
-          .size
-          .width / 2;
+      width = SIZE_WIDTH / 2;
     }
     print("titleView width $width portrait $portrait");
     return Container(
@@ -725,15 +686,9 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   titleView(bool portrait) {
     var width;
     if (portrait) {
-      width = MediaQuery
-          .of(context)
-          .size
-          .width;
+      width = SIZE_WIDTH;
     } else {
-      width = MediaQuery
-          .of(context)
-          .size
-          .width / 2;
+      width = SIZE_WIDTH / 2;
     }
     print("titleView width $width portrait $portrait");
     return Container(
@@ -752,150 +707,128 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             ),
             _currentPlaceData.summary.length > 0
                 ? AutoSizeText(
-              _currentPlaceData.summary,
-              style: TextStyle(fontSize: getFont(8, context)),
-              maxLines: 1,
-              textAlign: TextAlign.center,
-            )
+                    _currentPlaceData.summary,
+                    style: TextStyle(fontSize: getFont(8, context)),
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                  )
                 : Container(),
           ],
         ));
   }
 
   detailView_() {
-    print("detailView_ isNaviStarted $_isNaviStarted");
+    print(
+        "detailView_ isNaviStarted $_isNaviStarted _isShowingMapOnly $_isShowingMapOnly");
     if (_searchResultData != null) {
       return searchDetailView();
     } else {
-      if(_isNaviStarted){
+      if (_isNaviStarted || !_isShowingMapOnly) {
         return getStreamBuilder();
       } else {
         return _streamBuilder;
       }
-
     }
-
   }
 
   searchDetailView() {
     if (_searchResultData != null) {
-      return OrientationBuilder(builder: (_, orientation)
-      {
-        var height;
-        String title = _searchResultData.address;
-        if (orientation == Orientation.portrait) {
-          if (_isNaviStarted) {
-            return Align(
-                alignment: Alignment.bottomCenter,
-                child: Wrap(children: [naviDetailContentView(title, true)]));
-          } else {
-            height = MediaQuery
-                .of(context)
-                .size
-                .height - MAP_HEIGHT;
-            return Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                    alignment: Alignment.center,
-                    height: height,
-                    child: Wrap(
-                      children: [
-                        searchTitleView(true),
-                        searchBottomView(true),
-                      ],
-                    )));
-          }
+      var orientation = MediaQuery.of(context).orientation;
+      var height;
+      String title = _searchResultData.address;
+      if (orientation == Orientation.portrait) {
+        if (_isNaviStarted) {
+          return Align(
+              alignment: Alignment.bottomCenter,
+              child: Wrap(children: [naviDetailContentView(title, true)]));
         } else {
-          if (_isNaviStarted) {
-            return Align(
-                alignment: Alignment.bottomRight,
-                child: naviDetailContentView(title, false));
-          } else {
-            return Align(
-                alignment: Alignment.bottomRight,
-                child: Container(
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width / 2,
-                    height: MediaQuery
-                        .of(context)
-                        .size
-                        .height -
-                        TOP_BAR_HEIGHT -
-                        PADDING_TOP,
-                    child: Flex(
-                      direction: Axis.vertical,
-                      children: [
-                        Expanded(child: searchTitleView(false), flex: 2),
-                        Expanded(child: searchBottomView(false), flex: 1),
-                      ],
-                    )));
-          }
+          height = SIZE_HEIGHT - MAP_HEIGHT;
+          return Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                  alignment: Alignment.center,
+                  height: height,
+                  child: Wrap(
+                    children: [
+                      searchTitleView(true),
+                      searchBottomView(true),
+                    ],
+                  )));
         }
-      });
+      } else {
+        if (_isNaviStarted) {
+          return Align(
+              alignment: Alignment.bottomRight,
+              child: naviDetailContentView(title, false));
+        } else {
+          return Align(
+              alignment: Alignment.bottomRight,
+              child: Container(
+                  width: SIZE_WIDTH / 2,
+                  height: SIZE_HEIGHT - TOP_BAR_HEIGHT - PADDING_TOP,
+                  child: Flex(
+                    direction: Axis.vertical,
+                    children: [
+                      Expanded(child: searchTitleView(false), flex: 2),
+                      Expanded(child: searchBottomView(false), flex: 1),
+                    ],
+                  )));
+        }
+      }
     }
   }
 
   detailView() {
     print(
         "detailView _isNaviStarted $_isNaviStarted _currentPlaceData $_currentPlaceData");
+    var orientation = MediaQuery.of(context).orientation;
     if (_currentPlaceData != null) {
-      return OrientationBuilder(builder: (_, orientation) {
-        String title =
-            "[${_currentPlaceData.category2}]${_currentPlaceData.name}";
-        if (orientation == Orientation.portrait) {
-          if (_isNaviStarted) {
-            return Align(
-                alignment: Alignment.bottomCenter,
-                child: Wrap(children: [naviDetailContentView(title, true)]));
-          } else {
-            return Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                    height: MediaQuery
-                        .of(context)
-                        .size
-                        .height - MAP_HEIGHT,
-                    child: Flex(
-                      direction: Axis.vertical,
-                      children: [
-                        Expanded(child: titleView(true), flex: 2),
-                        Expanded(child: tabView(true), flex: 3),
-                        Expanded(child: bottomView(true), flex: 2),
-                      ],
-                    )));
-          }
+      String title =
+          "[${_currentPlaceData.category2}]${_currentPlaceData.name}";
+      if (orientation == Orientation.portrait) {
+        if (_isNaviStarted) {
+          return Align(
+              alignment: Alignment.bottomCenter,
+              child: Wrap(children: [naviDetailContentView(title, true)]));
         } else {
-          if (_isNaviStarted) {
-            return Align(
-                alignment: Alignment.bottomRight,
-                child: naviDetailContentView(title, false));
-          } else {
-            return Align(
-                alignment: Alignment.bottomRight,
-                child: Container(
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width / 2,
-                    height: MediaQuery
-                        .of(context)
-                        .size
-                        .height -
-                        TOP_BAR_HEIGHT -
-                        PADDING_TOP,
-                    child: Flex(
-                      direction: Axis.vertical,
-                      children: [
-                        Expanded(child: titleView(false), flex: 1),
-                        Expanded(child: tabView(false), flex: 2),
-                        Expanded(child: bottomView(false), flex: 1),
-                      ],
-                    )));
-          }
+          return Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                  margin: EdgeInsets.all(1),
+                  decoration: BOX_DECORATION,
+                  height: SIZE_HEIGHT * 0.3,
+                  child: Flex(
+                    direction: Axis.vertical,
+                    children: [
+                      Expanded(child: titleView(true), flex: 2),
+                      Expanded(child: tabView(true), flex: 3),
+                      Expanded(child: bottomView(true), flex: 2),
+                    ],
+                  )));
         }
-      });
+      } else {
+        if (_isNaviStarted) {
+          return Align(
+              alignment: Alignment.bottomRight,
+              child: naviDetailContentView(title, false));
+        } else {
+          return Align(
+              alignment: Alignment.bottomRight,
+              child: Container(
+                  margin: EdgeInsets.all(1),
+                  decoration: BOX_DECORATION,
+                  width: SIZE_WIDTH / 2.5,
+                  height: SIZE_HEIGHT - TOP_BAR_HEIGHT - PADDING_TOP,
+                  child: Flex(
+                    direction: Axis.vertical,
+                    children: [
+                      Expanded(child: titleView(false), flex: 1),
+                      Expanded(child: tabView(false), flex: 2),
+                      Expanded(child: bottomView(false), flex: 1),
+                    ],
+                  )));
+        }
+      }
     }
 
     return Container();
@@ -906,19 +839,14 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     var width;
     var height;
     if (portrait) {
-      width = MediaQuery
-          .of(context)
-          .size
-          .width;
-      height = MediaQuery
-          .of(context)
-          .size
-          .height - MAP_HEIGHT;
+      width = SIZE_WIDTH;
+      height = SIZE_HEIGHT * 0.2;
       return Container(
         width: width,
         height: height,
         padding: EdgeInsets.only(top: 0),
-        margin: EdgeInsets.only(top: 0),
+        margin: EdgeInsets.all(1),
+        decoration: BOX_DECORATION,
         alignment: Alignment.bottomCenter,
         child: Column(
           children: <Widget>[
@@ -933,8 +861,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                 )),
             _currentTtsDescription.length > 0
                 ? AutoSizeText(_currentTtsDescription,
-                style: TextStyle(fontSize: getFont(10, context)),
-                maxLines: 1)
+                    style: TextStyle(fontSize: getFont(10, context)),
+                    maxLines: 1)
                 : Container(),
             Container(
                 margin: EdgeInsets.only(top: 5),
@@ -945,37 +873,37 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                   children: [
                     Container(
                         child: FlatButton(
-                          child: AutoSizeText(
-                            StringClass.RESTARTED,
-                            style: TextStyle(fontSize: getFont(10, context)),
-                          ),
-                          onPressed: () {
-                            _progressDialog.show();
-                            isPassedFirstPos = false;
-                            getOverlay(true);
-                            if (_isUsingTTS) {
-                              _flutterTts.speak(StringClass.TTS_RESTARTED);
-                            }
-                          },
-                        )),
+                      child: AutoSizeText(
+                        StringClass.RESTARTED,
+                        style: TextStyle(fontSize: getFont(10, context)),
+                      ),
+                      onPressed: () {
+                        _progressDialog.show();
+                        isPassedFirstPos = false;
+                        getOverlay(true);
+                        if (_isUsingTTS) {
+                          _flutterTts.speak(StringClass.TTS_RESTARTED);
+                        }
+                      },
+                    )),
                     Container(
                         child: FlatButton(
-                          child: AutoSizeText(
-                            StringClass.CANCEL,
-                            style: TextStyle(fontSize: getFont(10, context)),
-                          ),
-                          onPressed: () {
-                            _isNaviStarted = false;
-                            // _controller.hideMarkerInfoWindow(
-                            //     MarkerId(_currentPlaceData.docu));
+                      child: AutoSizeText(
+                        StringClass.CANCEL,
+                        style: TextStyle(fontSize: getFont(10, context)),
+                      ),
+                      onPressed: () {
+                        _isNaviStarted = false;
+                        // _controller.hideMarkerInfoWindow(
+                        //     MarkerId(_currentPlaceData.docu));
 
-                            stopNavi();
-                            if (_isUsingTTS) {
-                              _flutterTts.speak(StringClass.TTS_CANCELED);
-                            }
-                            hideDetail();
-                          },
-                        ))
+                        stopNavi();
+                        if (_isUsingTTS) {
+                          _flutterTts.speak(StringClass.TTS_CANCELED);
+                        }
+                        hideDetail();
+                      },
+                    ))
                   ],
                 ))
           ],
@@ -983,21 +911,19 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       );
     } else {
       width = NAVI_DETAIL_RIGHT_WIDTH;
-      height =
-          MediaQuery
-              .of(context)
-              .size
-              .height - TOP_BAR_HEIGHT - PADDING_TOP;
+      height = SIZE_HEIGHT - TOP_BAR_HEIGHT - PADDING_TOP;
       var summaryTitle = "";
       if (_currentPlaceData != null) {
         summaryTitle =
-        "[${_currentPlaceData.category2}]${_currentPlaceData.name}";
+            "[${_currentPlaceData.category2}]${_currentPlaceData.name}";
       } else if (_searchResultData != null) {
         summaryTitle = _searchResultData.address;
       }
       return Container(
         width: width,
         height: height,
+        margin: EdgeInsets.all(1),
+        decoration: BOX_DECORATION,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
@@ -1012,37 +938,37 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                 )),
             _currentTtsDescription.length > 0
                 ? AutoSizeText(_currentTtsDescription,
-                style: TextStyle(fontSize: getFont(10, context)),
-                maxLines: 1)
+                    style: TextStyle(fontSize: getFont(10, context)),
+                    maxLines: 1)
                 : Container(),
             Container(
                 child: FlatButton(
-                  child: AutoSizeText(
-                    StringClass.RESTARTED,
-                    style: TextStyle(fontSize: getFont(10, context)),
-                  ),
-                  onPressed: () {
-                    naviRestart();
-                  },
-                )),
+              child: AutoSizeText(
+                StringClass.RESTARTED,
+                style: TextStyle(fontSize: getFont(10, context)),
+              ),
+              onPressed: () {
+                naviRestart();
+              },
+            )),
             Container(
                 child: FlatButton(
-                  child: AutoSizeText(
-                    StringClass.CANCEL,
-                    style: TextStyle(fontSize: getFont(10, context)),
-                  ),
-                  onPressed: () {
-                    _isNaviStarted = false;
-                    // _controller.hideMarkerInfoWindow(
-                    //     MarkerId(_currentPlaceData.docu));
+              child: AutoSizeText(
+                StringClass.CANCEL,
+                style: TextStyle(fontSize: getFont(10, context)),
+              ),
+              onPressed: () {
+                _isNaviStarted = false;
+                // _controller.hideMarkerInfoWindow(
+                //     MarkerId(_currentPlaceData.docu));
 
-                    stopNavi();
-                    if (_isUsingTTS) {
-                      _flutterTts.speak(StringClass.TTS_CANCELED);
-                    }
-                    hideDetail();
-                  },
-                ))
+                stopNavi();
+                if (_isUsingTTS) {
+                  _flutterTts.speak(StringClass.TTS_CANCELED);
+                }
+                hideDetail();
+              },
+            ))
           ],
         ),
       );
@@ -1063,23 +989,11 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     var width;
     var height;
     if (portrait) {
-      width = MediaQuery
-          .of(context)
-          .size
-          .width;
-      height = MediaQuery
-          .of(context)
-          .size
-          .height / 5;
+      width = SIZE_WIDTH;
+      height = SIZE_HEIGHT / 5;
     } else {
-      width = MediaQuery
-          .of(context)
-          .size
-          .width / 2;
-      height = MediaQuery
-          .of(context)
-          .size
-          .height / 2;
+      width = SIZE_WIDTH / 2;
+      height = SIZE_HEIGHT / 2;
     }
     print("tabView width $width height $height portrait $portrait");
     return DefaultTabController(
@@ -1162,31 +1076,31 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     print("getTapImageView path $path");
     if (path == null || path.isEmpty) {
       path =
-      "https://firebasestorage.googleapis.com/v0/b/nodisable.appspot.com/o/ready.png?alt=media&token=6a6b0cee-e3a3-4354-9ba7-7cfd1d835145";
+          "https://firebasestorage.googleapis.com/v0/b/nodisable.appspot.com/o/ready.png?alt=media&token=6a6b0cee-e3a3-4354-9ba7-7cfd1d835145";
       return Container(
           child: Stack(
-            children: [
-              Container(
-                  alignment: Alignment.center,
-                  child: FlatButton(
-                    child: Image.network(path),
-                    onPressed: () {
-                      showImage(path);
-                    },
-                  )),
-              Container(
-                  alignment: Alignment.center,
-                  child: FlatButton(
-                    onPressed: () {
-                      showImage(path);
-                    },
-                    child: Text(
-                      StringClass.READY,
-                      style: TextStyle(backgroundColor: Colors.white),
-                    ),
-                  ))
-            ],
-          ));
+        children: [
+          Container(
+              alignment: Alignment.center,
+              child: FlatButton(
+                child: Image.network(path),
+                onPressed: () {
+                  showImage(path);
+                },
+              )),
+          Container(
+              alignment: Alignment.center,
+              child: FlatButton(
+                onPressed: () {
+                  showImage(path);
+                },
+                child: Text(
+                  StringClass.READY,
+                  style: TextStyle(backgroundColor: Colors.white),
+                ),
+              ))
+        ],
+      ));
     } else {
       return Container(
         alignment: Alignment.center,
@@ -1203,15 +1117,9 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   searchBottomView(bool portrait) {
     var width;
     if (portrait) {
-      width = MediaQuery
-          .of(context)
-          .size
-          .width;
+      width = SIZE_WIDTH;
     } else {
-      width = MediaQuery
-          .of(context)
-          .size
-          .width / 2;
+      width = SIZE_WIDTH / 2;
     }
     return Container(
         width: width,
@@ -1253,15 +1161,9 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   bottomView(bool portrait) {
     var width;
     if (portrait) {
-      width = MediaQuery
-          .of(context)
-          .size
-          .width;
+      width = SIZE_WIDTH;
     } else {
-      width = MediaQuery
-          .of(context)
-          .size
-          .width / 2;
+      width = SIZE_WIDTH / 2;
     }
     print("bottomView width $width portrait $portrait");
     return Container(
@@ -1319,8 +1221,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
     TextEditingController _controller = TextEditingController();
     showDialog(
         context: context,
-        builder: (context) =>
-            AlertDialog(
+        builder: (context) => AlertDialog(
               title: new Text(StringClass.DIALOG_TITLE_SEARCH),
               content: TextField(
                 onChanged: (value) {},
@@ -1339,9 +1240,9 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
                     onPressed: () {
                       showToast(_controller.text);
                       getSearchResult(
-                          _controller.text,
-                          _current_position.latitude,
-                          _current_position.longitude)
+                              _controller.text,
+                              _current_position.latitude,
+                              _current_position.longitude)
                           .then((value) {
                         SEARCH_RESULT_LIST = value;
                         showToast(
@@ -1390,7 +1291,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       target_lon = _searchResultData.longitude;
     }
     requestDirection(_current_position.latitude, _current_position.longitude,
-        target_lat, target_lon)
+            target_lat, target_lon)
         .then((value) {
       _isNaviStarted = true;
       Navigator.of(context).pop('dialog');
@@ -1409,7 +1310,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
         for (int j = 0; j < nv.coordinates.length; j++) {
           if (nv.coordinates != null) {
             firstPosition =
-            new LatLng(nv.coordinates[j][1], nv.coordinates[j][0]);
+                new LatLng(nv.coordinates[j][1], nv.coordinates[j][0]);
             break;
           }
         }
@@ -1422,9 +1323,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             firstPosition.latitude,
             firstPosition.longitude);
         print(
-            "getOverlay getCurrentLocation  ${_current_position
-                .latitude} ${_current_position.longitude} to ${firstPosition
-                .latitude} ${firstPosition.longitude} bearing $value");
+            "getOverlay getCurrentLocation  ${_current_position.latitude} ${_current_position.longitude} to ${firstPosition.latitude} ${firstPosition.longitude} bearing $value");
 
         moveCameraPosition(_current_position.latitude,
             _current_position.longitude, bearing, true, 99);
@@ -1436,6 +1335,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   }
 
   dropDownView() {
+    print("dropDownView");
     return Container(
         height: TOP_BAR_HEIGHT,
         alignment: Alignment.centerLeft,
@@ -1604,8 +1504,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       } else {
         showDialog(
             context: context,
-            builder: (context) =>
-                AlertDialog(
+            builder: (context) => AlertDialog(
                   title: new Text(StringClass.DIALOG_TITLE_TTS),
                   content: new Text(StringClass.DIALOG_MESSAGE_TTS),
                   actions: <Widget>[
@@ -1687,63 +1586,60 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
   }
 
   searchView() {
-    return OrientationBuilder(builder: (_, orientation) {
-      Alignment align;
-      if (orientation == Orientation.portrait) {
-        align = Alignment.topRight;
-      } else {
-        align = Alignment.topLeft;
-      }
+    print("searchView");
+    Alignment align;
+    if (MediaQuery.of(context).orientation == Orientation.portrait) {
+      align = Alignment.topRight;
+    } else {
+      align = Alignment.topLeft;
+    }
 
-      return Container(
-          alignment: align,
-          padding: EdgeInsets.only(top: PADDING_TOP + TOP_BAR_HEIGHT),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FlatButton(
+    return Container(
+        alignment: align,
+        padding: EdgeInsets.only(top: PADDING_TOP + TOP_BAR_HEIGHT),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FlatButton(
+              minWidth: 50,
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Image.asset("asset/images/search.jpg", width: 20, height: 20),
+                AutoSizeText(
+                  StringClass.SEARCH,
+                  minFontSize: 1,
+                  maxFontSize: getFont(10, context),
+                  style: TextStyle(backgroundColor: Colors.white),
+                ),
+              ]),
+              onPressed: () {
+                showSearchDialog();
+              },
+            ),
+            FlatButton(
                 minWidth: 50,
+                onPressed: () {
+                  SEARCH_RESULT_LIST.clear();
+                  hideDetail();
+                  setState(() {});
+                },
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Image.asset("asset/images/search.jpg", width: 20, height: 20),
+                  Image.asset("asset/images/reset.png", width: 20, height: 20),
                   AutoSizeText(
-                    StringClass.SEARCH,
+                    StringClass.RESET,
                     minFontSize: 1,
                     maxFontSize: getFont(10, context),
                     style: TextStyle(backgroundColor: Colors.white),
                   ),
-                ]),
-                onPressed: () {
-                  showSearchDialog();
-                },
-              ),
-              FlatButton(
-                  minWidth: 50,
-                  onPressed: () {
-                    SEARCH_RESULT_LIST.clear();
-                    hideDetail();
-                    setState(() {});
-                  },
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Image.asset("asset/images/reset.png",
-                        width: 20, height: 20),
-                    AutoSizeText(
-                      StringClass.RESET,
-                      minFontSize: 1,
-                      maxFontSize: getFont(10, context),
-                      style: TextStyle(backgroundColor: Colors.white),
-                    ),
-                  ]))
-            ],
-          ));
-    });
+                ]))
+          ],
+        ));
   }
 
   showSearchResultDialog(List list) {
     print("showSearchResultDialog list ${list.length}");
     showDialog(
         context: context,
-        builder: (context) =>
-            AlertDialog(
+        builder: (context) => AlertDialog(
               title: new Text(StringClass.DIALOG_TITLE_SEARCH),
               content: ListView.builder(
                   itemCount: list.length,

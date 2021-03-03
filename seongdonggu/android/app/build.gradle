@@ -43,7 +43,7 @@ android {
         targetSdkVersion 29
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-
+        multiDexEnabled true
     }
     def keystoreProperties = new Properties()
     def keystorePropertiesFile = rootProject.file('key.properties')
