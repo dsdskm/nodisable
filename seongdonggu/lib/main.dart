@@ -132,18 +132,33 @@ class _MyHomePageState extends State<MyHomePage> {
       for (int i = 0; i < event.docs.length; i++) {
         DocumentSnapshot ds = event.docs[i];
         List<dynamic> menu = ds[FIELD_MENU_CATEGORY];
+
+        CategoryData cd = CategoryData(0, 0, FIELD_MENU_CATEGORY, "전체");
+        list.add(cd);
+        depth1_list.add(cd);
         for (int i = 0; i < menu.length; i++) {
           String category = menu[i];
-          CategoryData cd = CategoryData(i, 0, FIELD_MENU_CATEGORY, category);
+          print("category $category");
+          CategoryData cd =
+              CategoryData(i + 1, 0, FIELD_MENU_CATEGORY, category);
           list.add(cd);
           depth1_list.add(cd);
         }
+
         for (int j = 0; j < depth1_list.length; j++) {
           CategoryData sub_cd = depth1_list[j];
+          print("sub_cd $sub_cd");
+          if (sub_cd.value == "전체") {
+            CategoryData data = CategoryData(0, 1, sub_cd.value, "전체");
+            list.add(data);
+            continue;
+          }
           List<dynamic> subMenu = ds[sub_cd.value];
           for (int k = 0; k < subMenu.length; k++) {
             String sub_category = subMenu[k];
-            CategoryData data = CategoryData(k, 1, sub_cd.value, sub_category);
+            print("sub_category $sub_category");
+            CategoryData data =
+                CategoryData(k, 1, sub_cd.value, sub_category);
             list.add(data);
           }
         }
