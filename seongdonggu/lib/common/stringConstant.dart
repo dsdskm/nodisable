@@ -48,5 +48,6 @@ class StringClass{
   static String DIALOG_MESSAGE_SEARCH = "주소를 입력해주세요.";
   static String JIBUN_ADDRESS = "지번 주소";
   static String ROAD_ADDRESS = "도로명 주소";
+  static String OK = "확인";
 
 }
