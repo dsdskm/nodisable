@@ -84,7 +84,7 @@ class _$MyDatabase extends MyDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `placeTable` (`uid` INTEGER PRIMARY KEY AUTOINCREMENT, `docu` TEXT, `address` TEXT, `category1` TEXT, `category2` TEXT, `contact` TEXT, `elevator` INTEGER, `floor` TEXT, `gyungsaro` INTEGER, `latitude` REAL, `longitude` REAL, `name` TEXT, `parking` INTEGER, `restroom` INTEGER, `summary` TEXT, `using` INTEGER, `image_base` TEXT, `image_elevator` TEXT, `image_gyungsaro` TEXT, `image_parking` TEXT, `image_restroom` TEXT)');
+            'CREATE TABLE IF NOT EXISTS `placeTable` (`uid` INTEGER PRIMARY KEY AUTOINCREMENT, `docu` TEXT, `address` TEXT, `category1` TEXT, `category2` TEXT, `contact` TEXT, `elevator` INTEGER, `floor` TEXT, `gyungsaro` INTEGER, `latitude` REAL, `longitude` REAL, `name` TEXT, `parking` INTEGER, `restroom` INTEGER, `summary` TEXT, `using` INTEGER, `image_base` TEXT, `image_elevator` TEXT, `image_gyungsaro` TEXT, `image_parking` TEXT, `image_restroom` TEXT, `arr_image_elevator` TEXT, `arr_image_gyungsaro` TEXT, `arr_image_parking` TEXT, `arr_image_restroom` TEXT)');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `notice` (`uid` INTEGER PRIMARY KEY AUTOINCREMENT, `docu` TEXT, `title` TEXT, `content` TEXT, `image` TEXT)');
         await database.execute(
@@ -143,7 +143,11 @@ class _$PlaceDao extends PlaceDao {
                   'image_elevator': item.image_elevator,
                   'image_gyungsaro': item.image_gyungsaro,
                   'image_parking': item.image_parking,
-                  'image_restroom': item.image_restroom
+                  'image_restroom': item.image_restroom,
+                  'arr_image_elevator': item.arr_image_elevator,
+                  'arr_image_gyungsaro': item.arr_image_gyungsaro,
+                  'arr_image_parking': item.arr_image_parking,
+                  'arr_image_restroom': item.arr_image_restroom
                 });
 
   final sqflite.DatabaseExecutor database;
@@ -172,7 +176,11 @@ class _$PlaceDao extends PlaceDao {
       row['image_elevator'] as String,
       row['image_gyungsaro'] as String,
       row['image_parking'] as String,
-      row['image_restroom'] as String);
+      row['image_restroom'] as String,
+      row['arr_image_elevator'] as String,
+      row['arr_image_gyungsaro'] as String,
+      row['arr_image_parking'] as String,
+      row['arr_image_restroom'] as String);
 
   final InsertionAdapter<PlaceData> _placeDataInsertionAdapter;
 

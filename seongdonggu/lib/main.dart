@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:developer' as developer;
 import 'package:auto_size_text/auto_size_text.dart';
@@ -88,10 +89,18 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     setSize(MediaQuery.of(context));
-    var imgSize = MediaQuery.of(context).size.width / 1.5;
+    var imgSize = MediaQuery
+        .of(context)
+        .size
+        .width / 1.5;
     var fontSize = 40;
-    if (MediaQuery.of(context).orientation == Orientation.landscape) {
-      imgSize = MediaQuery.of(context).size.height / 1.5;
+    if (MediaQuery
+        .of(context)
+        .orientation == Orientation.landscape) {
+      imgSize = MediaQuery
+          .of(context)
+          .size
+          .height / 1.5;
       fontSize = 25;
     }
     return Scaffold(
@@ -113,7 +122,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         AutoSizeText(
                           StringClass.LABEL,
                           style:
-                              TextStyle(fontSize: getFont(fontSize, context)),
+                          TextStyle(fontSize: getFont(fontSize, context)),
                           maxLines: 1,
                         ),
                       ],
@@ -140,7 +149,7 @@ class _MyHomePageState extends State<MyHomePage> {
           String category = menu[i];
           print("category $category");
           CategoryData cd =
-              CategoryData(i + 1, 0, FIELD_MENU_CATEGORY, category);
+          CategoryData(i + 1, 0, FIELD_MENU_CATEGORY, category);
           list.add(cd);
           depth1_list.add(cd);
         }
@@ -157,8 +166,7 @@ class _MyHomePageState extends State<MyHomePage> {
           for (int k = 0; k < subMenu.length; k++) {
             String sub_category = subMenu[k];
             print("sub_category $sub_category");
-            CategoryData data =
-                CategoryData(k, 1, sub_cd.value, sub_category);
+            CategoryData data = CategoryData(k, 1, sub_cd.value, sub_category);
             list.add(data);
           }
         }
@@ -180,6 +188,7 @@ class _MyHomePageState extends State<MyHomePage> {
       for (int i = 0; i < event.docs.length; i++) {
         Map<String, dynamic> ds = event.docs[i].data();
         String id = event.docs[i].id;
+        print("id ${id}");
         String address = nullCheck(ds[FIELD_ADDRESS]);
         String category1 = nullCheck(ds[FIELD_CATEGORY1]);
         String category2 = nullCheck(ds[FIELD_CATEGORY2]);
@@ -211,6 +220,43 @@ class _MyHomePageState extends State<MyHomePage> {
           image_restroom =
               nullImageCheck(image[FIELD_IMAGE_RESTROOM], image_base);
         }
+        Map<dynamic, dynamic> images = ds[FIELD_IMAGES];
+        List<dynamic> json_image_elevator = images[FIELD_IMAGE_ELEVATOR];
+        List<dynamic> json_image_gyungsaro = images[FIELD_IMAGE_GYUNGSARO];
+        List<dynamic> json_image_parking = images[FIELD_IMAGE_PARKING];
+        List<dynamic> json_image_restroom = images[FIELD_IMAGE_RESTROOM];
+
+        String str_images_elevator = "";
+        for (int i = 0; i < json_image_elevator.length; i++) {
+          str_images_elevator += json_image_elevator[i];
+          if (i != json_image_elevator.length - 1) {
+            str_images_elevator += ",";
+          }
+        }
+        String str_image_gyungsaro = "";
+        for (int i = 0; i < json_image_gyungsaro.length; i++) {
+          str_image_gyungsaro += json_image_gyungsaro[i];
+          if (i != json_image_gyungsaro.length - 1) {
+            str_image_gyungsaro += ",";
+          }
+        }
+
+        String str_image_parking = "";
+        for (int i = 0; i < json_image_parking.length; i++) {
+          str_image_parking += json_image_parking[i];
+          if (i != json_image_parking.length - 1) {
+            str_image_parking += ",";
+          }
+        }
+
+        String str_image_restroom = "";
+        for (int i = 0; i < json_image_restroom.length; i++) {
+          str_image_restroom += json_image_restroom[i];
+          if (i != json_image_restroom.length - 1) {
+            str_image_restroom += ",";
+          }
+        }
+
         PlaceData pd = PlaceData(
             id,
             address,
@@ -231,7 +277,11 @@ class _MyHomePageState extends State<MyHomePage> {
             image_elevator,
             image_gyungsaro,
             image_parking,
-            image_restroom);
+            image_restroom,
+            str_images_elevator,
+            str_image_gyungsaro,
+            str_image_parking,
+            str_image_restroom);
         if (pd.using == null || pd.using) {
           list.add(pd);
         }

@@ -37,7 +37,7 @@ class ImageViewState extends State<ImageViewWidget> {
       children: [
         PhotoView(
             imageProvider: CachedNetworkImageProvider(_image),
-            enableRotation: true),
+            enableRotation: false),
         Align(
           alignment: Alignment.bottomCenter,
           child: Card(

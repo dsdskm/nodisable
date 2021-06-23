@@ -5,8 +5,8 @@ final DEBUG = false;
 
 final NAVER_CLIENT_ID = "quld7x8r88";
 
-final COLLECTION_LOCATION = "location";
-final COLLECTION_CATEGORY = "category";
+final COLLECTION_LOCATION = "location_1.0";
+final COLLECTION_CATEGORY = "category_1.0";
 final COLLECTION_NOTICE = "notice";
 final COLLECTION_COMMENT = "comment";
 final COLLECTION_VERSION = "version";
@@ -25,6 +25,7 @@ final FIELD_RESTROOM = "restroom";
 final FIELD_SUMMARY = "summary";
 final FIELD_USING = "using";
 final FIELD_IMAGE = "image";
+final FIELD_IMAGES = "images";
 final FIELD_IMAGE_BASE = "base";
 final FIELD_IMAGE_ELEVATOR = "elevator";
 final FIELD_IMAGE_GYUNGSARO = "gyungsaro";

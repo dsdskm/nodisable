@@ -24,6 +24,10 @@ class PlaceData {
   String image_gyungsaro;
   String image_parking;
   String image_restroom;
+  String arr_image_elevator;
+  String arr_image_gyungsaro;
+  String arr_image_parking;
+  String arr_image_restroom;
 
   PlaceData(
       this.docu,
@@ -46,10 +50,13 @@ class PlaceData {
       this.image_gyungsaro,
       this.image_parking,
       this.image_restroom,
-      );
+      this.arr_image_elevator,
+      this.arr_image_gyungsaro,
+      this.arr_image_parking,
+      this.arr_image_restroom);
 
   @override
   String toString() {
-    return 'PlaceData{uid: $uid, docu: $docu, address: $address, category1: $category1, category2: $category2, contact: $contact, elevator: $elevator, floor: $floor, gyungsaro: $gyungsaro, latitude: $latitude, longitude: $longitude, name: $name, parking: $parking, restroom: $restroom, summary: $summary, using: $using, image_base: $image_base, image_elevator: $image_elevator, image_gyungsaro: $image_gyungsaro, image_parking: $image_parking, image_restroom: $image_restroom}';
+    return 'PlaceData{uid: $uid, docu: $docu, address: $address, category1: $category1, category2: $category2, contact: $contact, elevator: $elevator, floor: $floor, gyungsaro: $gyungsaro, latitude: $latitude, longitude: $longitude, name: $name, parking: $parking, restroom: $restroom, summary: $summary, using: $using, image_base: $image_base, image_elevator: $image_elevator, image_gyungsaro: $image_gyungsaro, image_parking: $image_parking, image_restroom: $image_restroom, arr_image_elevator: $arr_image_elevator, arr_image_gyungsaro: $arr_image_gyungsaro, arr_image_parking: $arr_image_parking, arr_image_restroom: $arr_image_restroom}';
   }
 }
