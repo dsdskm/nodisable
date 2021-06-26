@@ -1101,10 +1101,11 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
             Expanded(
               child: TabBarView(
                 children: <Widget>[
-                  getTapImageView(_currentPlaceData.arr_image_elevator),
                   getTapImageView(_currentPlaceData.arr_image_gyungsaro),
+                  getTapImageView(_currentPlaceData.arr_image_restroom),
+                  getTapImageView(_currentPlaceData.arr_image_elevator),
                   getTapImageView(_currentPlaceData.arr_image_parking),
-                  getTapImageView(_currentPlaceData.arr_image_restroom)
+
                 ],
               ),
             ),
