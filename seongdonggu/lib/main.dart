@@ -194,7 +194,7 @@ class _MyHomePageState extends State<MyHomePage> {
         String category2 = nullCheck(ds[FIELD_CATEGORY2]);
         String contact = nullCheck(ds[FIELD_CONTACT]);
         bool elevator = ds[FIELD_ELEVATOR];
-        String floor = nullCheck(ds[FIELD_FLOOR]);
+        String floor = nullCheck(ds[FIELD_FLOOR].toString());
         bool gyungsaro = ds[FIELD_GYUNGSARO];
         double latitude = ds[FIELD_LATITUDE];
         double longitude = ds[FIELD_LONGITUDE];
