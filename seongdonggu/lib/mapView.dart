@@ -173,7 +173,7 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
               String category2 = nullCheck(ds[FIELD_CATEGORY2]);
               String contact = nullCheck(ds[FIELD_CONTACT]);
               bool elevator = ds[FIELD_ELEVATOR];
-              String floor = nullCheck(ds[FIELD_FLOOR]);
+              String floor = nullCheck(ds[FIELD_FLOOR].toString());
               bool gyungsaro = ds[FIELD_GYUNGSARO];
               double latitude = ds[FIELD_LATITUDE];
               double longitude = ds[FIELD_LONGITUDE];
@@ -1147,21 +1147,25 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       ));
     } else {
       var arr = path.split(',');
-      return ListView.builder(
-          shrinkWrap: true,
-          scrollDirection: Axis.horizontal,
-          itemCount: arr.length,
-          itemBuilder: (BuildContext context, int index) {
-            return Container(
-              alignment: Alignment.center,
-              child: FlatButton(
-                child: Image.network(arr[index]),
-                onPressed: () {
-                  showImage(arr[index]);
-                },
-              ),
-            );
-          });
+      return Center(
+        child:ListView.builder(
+            padding: const EdgeInsets.all(0),
+            shrinkWrap: true,
+            scrollDirection: Axis.horizontal,
+            itemCount: arr.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Container(
+                alignment: Alignment.center,
+                child: FlatButton(
+                  child: Image.network(arr[index]),
+                  onPressed: () {
+                    showImage(arr[index]);
+                  },
+                ),
+              );
+            })
+      );
+
       /*
       return Container(
         alignment: Alignment.center,
