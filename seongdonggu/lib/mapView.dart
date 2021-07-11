@@ -446,8 +446,8 @@ class MainViewState extends State<MainViewWidget> with WidgetsBindingObserver {
       print("info title $title");
       Marker marker = Marker(
           markerId: data.docu,
-          width: 20,
-          height: 30,
+          width: 15,
+          height: 20,
           position: LatLng(data.latitude, data.longitude),
           infoWindow: title,
           onMarkerTab: (marker, iconSize) {

@@ -13,6 +13,7 @@ part 'database.g.dart';
 /*
    flutter pub run build_runner build --delete-conflicting-outputs
    adb shell pm clear com.kkh.seongdonggu
+   flutter clean
    flutter build apk --release
    flutter build appbundle
     */
