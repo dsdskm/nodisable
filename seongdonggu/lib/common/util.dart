@@ -8,10 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:launch_review/launch_review.dart';
+import 'package:open_appstore/open_appstore.dart';
 import 'package:package_info/package_info.dart';
 import 'package:seongdonggu/common/constants.dart';
 import 'package:seongdonggu/common/stringConstant.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 showToast(String msg) async {
   Fluttertoast.showToast(
       msg: msg,
@@ -42,6 +43,7 @@ String nullImageCheck(String text, String image_base) {
 // }
 
 appVersionCheck(BuildContext context) {
+
   FirebaseFirestore.instance
       .collection(COLLECTION_VERSION)
       .doc(RELEASE)
@@ -81,9 +83,11 @@ showDownloadIDialog(BuildContext context) {
                 child: new Text(StringClass.GO_UPDATE),
                 onPressed: () {
                   Navigator.of(context, rootNavigator: true).pop('dialog');
-                  LaunchReview.launch(
-                      androidAppId: "com.kkh.seongdonggu",
-                      iOSAppId: "com.kkh.seongdonggu");
+                  if(Platform.isIOS){
+                    launch("https://apps.apple.com/kr/app/%EB%AC%B4%EC%9E%A5%EC%95%A0in%EC%84%B1%EB%8F%99%EA%B5%AC/id1559785358?l=kr");
+                  } else {
+                    LaunchReview.launch();
+                  }
                 },
               ),
             ],
